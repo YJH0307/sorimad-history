@@ -19,6 +19,7 @@
         
         .video-card { perspective: 1000px; transform-style: preserve-3d; position: relative; height: 85px; margin-bottom: 12px; cursor: grab; touch-action: none; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
         .video-card.flipped { transform: rotateX(180deg); }
+        .video-card.no-drag { cursor: default; }
         
         .sortable-ghost { opacity: 0.1 !important; background: #3a3a3c !important; border-radius: 8px; }
         .sortable-drag { opacity: 1 !important; transform: scale(1.05); box-shadow: 0 15px 30px rgba(0,0,0,0.8); z-index: 1000; transition: none !important; }
@@ -39,16 +40,15 @@
         .wrong-back { background: #e74c3c !important; border-color: #e74c3c !important; }
         
         button { margin-top: 10px; padding: 15px 40px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 30px; border: none; background: #eee; color: #121213; transition: transform 0.2s; }
+        button:disabled { background: #3a3a3c; color: #818384; cursor: not-allowed; }
         #share-btn { display: none; background: #538d4e; color: #fff; }
 
-        /* 통계 영역 */
         #stats-container { display: none; margin-top: 20px; text-align: center; background: #1a1a1b; padding: 15px; border-radius: 15px; width: 100%; max-width: 400px; border: 1px solid #3a3a3c; }
         .stat-grid { display: flex; justify-content: space-around; margin-bottom: 15px; }
         .stat-box { display: flex; flex-direction: column; }
         .stat-val { font-size: 20px; font-weight: 900; }
         .stat-lbl { font-size: 10px; color: #818384; }
 
-        /* 모달 */
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); }
         .modal-content { background: #1a1a1b; margin: 20% auto; padding: 25px; border: 1px solid #3a3a3c; width: 85%; max-width: 350px; border-radius: 15px; text-align: center; }
         .close-btn { background: #538d4e; padding: 10px 30px; border-radius: 20px; cursor: pointer; margin-top: 20px; display: inline-block; font-weight: bold; color: white; }
@@ -59,8 +59,8 @@
 
     <h1 id="game-title">소리MAD 타임라인 <span id="help-icon">?</span></h1>
     <div id="today-date" class="date-display"></div>
-    <div id="game-no" class="game-no" onclick="openArchive()">#소리MAD타임라인_1 (날짜변경)</div>
-    <p>오래된 순(위) → 최신 순(아래)</p>
+    <div id="game-no" class="game-no" onclick="openArchive()">#소리MAD타임라인_ (날짜변경)</div>
+    <p id="game-status">오래된 순(위) → 최신 순(아래)</p>
 
     <div id="quiz-container"><p>데이터 로딩 중...</p></div>
 
@@ -74,29 +74,29 @@
             <div class="stat-box"><span class="stat-val" id="stat-streak">0</span><span class="stat-lbl">스트릭</span></div>
             <div class="stat-box"><span class="stat-val" id="stat-max">0</span><span class="stat-lbl">최대</span></div>
         </div>
-        <div id="result-msg" style="font-weight: bold;"></div>
+        <div id="result-msg" style="font-weight: bold; white-space: pre-wrap;"></div>
     </div>
 
     <div id="helpModal" class="modal">
         <div class="modal-content">
             <h2>게임 방법</h2>
-            <ul>
+            <ul style="text-align: left; font-size: 14px; line-height: 1.8;">
                 <li>소리MAD 영상 5개를 <b>날짜 순</b>으로 나열하세요.</li>
-                <li>위: 가장 오래된 영상, 아래: 최신 영상</li>
-                <li>정답 확인 후 카드를 눌러 <b>영상</b>을 확인하세요!</li>
+                <li>위: 오래된 영상, 아래: 최신 영상</li>
+                <li>기회는 <b>하루 한 번</b>입니다!</li>
             </ul>
-            <div class="close-btn" onclick="closeModal('helpModal')">알겠어요!</div>
+            <div class="close-btn" onclick="closeModal()">알겠어요!</div>
         </div>
     </div>
 
     <div id="archiveModal" class="modal">
         <div class="modal-content">
             <h2>지난 문제 풀기</h2>
-            <p>날짜를 선택하면 해당 날짜의 문제로 이동합니다.</p>
+            <p>오늘 이전의 날짜만 선택 가능합니다.</p>
             <input type="date" id="archive-date">
             <br>
             <div class="close-btn" onclick="jumpToDate()">이동하기</div>
-            <div class="close-btn" style="background:#444" onclick="closeModal('archiveModal')">취소</div>
+            <div class="close-btn" style="background:#444" onclick="closeModal()">취소</div>
         </div>
     </div>
 
@@ -113,7 +113,10 @@
 
         function getDaysSinceStart(d) {
             const start = new Date("2026-02-05");
-            return Math.floor((d - start) / (1000 * 60 * 60 * 24)) + 1;
+            start.setHours(0,0,0,0);
+            const current = new Date(d);
+            current.setHours(0,0,0,0);
+            return Math.floor((current - start) / (1000 * 60 * 60 * 24)) + 1;
         }
 
         fetch(sheetUrl).then(r => r.text()).then(csv => {
@@ -126,102 +129,172 @@
         });
 
         function loadGame(date) {
-            isGameFinished = false;
+            // 미래 날짜 방지
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            if (date > today) { alert("미래의 문제는 미리 풀 수 없습니다!"); return; }
+
             targetDate = date;
             daysElapsedGlobal = getDaysSinceStart(targetDate);
             document.getElementById('today-date').innerText = targetDate.toLocaleDateString();
             document.getElementById('game-no').innerText = `#소리MAD타임라인_${daysElapsedGlobal} (날짜변경)`;
+            
+            // 도전 여부 확인 (LocalStorage)
+            const history = JSON.parse(localStorage.getItem('soriHistory') || '{}');
+            const alreadySolved = history[daysElapsedGlobal];
+
+            const dailySelection = getDailySelection(daysElapsedGlobal);
+            
+            if (alreadySolved) {
+                renderSolvedGame(dailySelection, alreadySolved);
+            } else {
+                renderNewGame(dailySelection);
+            }
+        }
+
+        function getDailySelection(dayNo) {
+            const selection = [];
+            let usedDates = new Set(), currentIndex = (dayNo * 7) % allData.length, attempts = 0;
+            while (selection.length < 5 && attempts < allData.length) {
+                const item = allData[currentIndex % allData.length];
+                if (!usedDates.has(item.date)) { selection.push(item); usedDates.add(item.date); }
+                currentIndex++; attempts++;
+            }
+            // 섞기
+            return selection.sort((a, b) => ((dayNo + a.title.length) % 10) - 5);
+        }
+
+        function renderNewGame(list) {
+            isGameFinished = false;
+            sortableInstance.option("disabled", false);
             document.getElementById('check-btn').style.display = 'block';
             document.getElementById('share-btn').style.display = 'none';
             document.getElementById('stats-container').style.display = 'none';
-            sortableInstance.option("disabled", false);
-
-            const dailySelection = [];
-            let usedDates = new Set(), currentIndex = (daysElapsedGlobal * 5) % allData.length, attempts = 0;
-            while (dailySelection.length < 5 && attempts < allData.length) {
-                const item = allData[currentIndex % allData.length];
-                if (!usedDates.has(item.date)) { dailySelection.push(item); usedDates.add(item.date); }
-                currentIndex++; attempts++;
-            }
-
-            const displayList = [...dailySelection].sort((a, b) => ((daysElapsedGlobal + a.title.length) % 10) - 5);
+            document.getElementById('game-status').innerText = "오래된 순(위) → 최신 순(아래)";
+            
             container.innerHTML = "";
-            displayList.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'video-card'; card.dataset.date = item.date;
-                card.onclick = function() { if (isGameFinished) this.classList.toggle('flipped'); };
-                card.innerHTML = `
-                    <div class="card-face card-front">
-                        <div class="thumbnail"><img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg"></div>
-                        <div class="info"><div class="video-title">${item.title}</div><div class="author">${item.author}</div></div>
-                    </div>
-                    <div class="card-face card-back">
-                        <div class="back-date">${item.date}</div>
-                        <a href="https://youtu.be/${item.youtubeId}" target="_blank" class="yt-link" onclick="event.stopPropagation()">영상 보기</a>
-                    </div>
-                `;
-                container.appendChild(card);
+            list.forEach(item => {
+                container.appendChild(createCard(item));
             });
         }
 
+        function renderSolvedGame(list, solvedData) {
+            isGameFinished = true;
+            sortableInstance.option("disabled", true);
+            document.getElementById('check-btn').style.display = 'none';
+            document.getElementById('game-status').innerText = "이미 완료한 정답입니다.";
+            
+            // 저장된 순서대로 카드 배치
+            const sortedList = [...list].sort((a,b) => {
+                return solvedData.order.indexOf(a.date) - solvedData.order.indexOf(b.date);
+            });
+
+            container.innerHTML = "";
+            const correctDates = [...solvedData.order].sort();
+
+            sortedList.forEach((item, i) => {
+                const card = createCard(item);
+                const isCorrect = item.date === correctDates[i];
+                card.querySelector('.card-back').classList.add(isCorrect ? 'correct-back' : 'wrong-back');
+                card.classList.add('flipped', 'no-drag');
+                container.appendChild(card);
+            });
+            
+            showStatsUI(solvedData.score);
+        }
+
+        function createCard(item) {
+            const card = document.createElement('div');
+            card.className = 'video-card'; card.dataset.date = item.date;
+            card.onclick = function() { if (isGameFinished) this.classList.toggle('flipped'); };
+            card.innerHTML = `
+                <div class="card-face card-front">
+                    <div class="thumbnail"><img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg"></div>
+                    <div class="info"><div class="video-title">${item.title}</div><div class="author">${item.author}</div></div>
+                </div>
+                <div class="card-face card-back">
+                    <div class="back-date">${item.date}</div>
+                    <a href="https://youtu.be/${item.youtubeId}" target="_blank" class="yt-link" onclick="event.stopPropagation()">영상 보기</a>
+                </div>
+            `;
+            return card;
+        }
+
         document.getElementById('check-btn').onclick = function() {
+            if (isGameFinished) return;
             sortableInstance.option("disabled", true);
             isGameFinished = true;
+            
             const cards = Array.from(container.children);
             const userDates = cards.map(c => c.dataset.date);
             const sortedDates = [...userDates].sort();
-            let correctCount = 0;
+            let score = 0;
             
             cards.forEach((card, i) => {
                 setTimeout(() => {
                     const isCorrect = userDates[i] === sortedDates[i];
-                    const backFace = card.querySelector('.card-back');
-                    if (isCorrect) { backFace.classList.add('correct-back'); correctCount++; }
-                    else { backFace.classList.add('wrong-back'); }
-                    card.classList.add('flipped');
-                    if (i === cards.length - 1) finishGame(correctCount);
+                    if (isCorrect) {
+                        card.querySelector('.card-back').classList.add('correct-back');
+                        score++;
+                    } else {
+                        card.querySelector('.card-back').classList.add('wrong-back');
+                    }
+                    card.classList.add('flipped', 'no-drag');
+                    if (i === cards.length - 1) {
+                        saveResult(score, userDates);
+                        showStatsUI(score);
+                    }
                 }, i * 200);
             });
             this.style.display = 'none';
         };
 
-        function finishGame(count) {
-            updateStats(count === 5);
-            document.getElementById('share-btn').style.display = 'block';
-            document.getElementById('stats-container').style.display = 'block';
-            let rank = count === 5 ? "완벽합니다! 🔥" : count >= 3 ? "훌륭해요! 👍" : "조금 더 정진하세요! 💦";
-            document.getElementById('result-msg').innerText = `${rank} (${count}/5 정답)`;
-        }
+        function saveResult(score, order) {
+            const history = JSON.parse(localStorage.getItem('soriHistory') || '{}');
+            history[daysElapsedGlobal] = { score, order, date: new Date().toLocaleDateString() };
+            localStorage.setItem('soriHistory', JSON.stringify(history));
 
-        function updateStats(isWin) {
             let s = JSON.parse(localStorage.getItem('soriStats') || '{"played":0,"wins":0,"streak":0,"maxStreak":0}');
             s.played++;
-            if (isWin) { s.wins++; s.streak++; } else { s.streak = 0; }
+            if (score === 5) { s.wins++; s.streak++; } else { s.streak = 0; }
             if (s.streak > s.maxStreak) s.maxStreak = s.streak;
             localStorage.setItem('soriStats', JSON.stringify(s));
+        }
+
+        function showStatsUI(score) {
+            const s = JSON.parse(localStorage.getItem('soriStats') || '{}');
+            document.getElementById('stat-played').innerText = s.played || 0;
+            document.getElementById('stat-winrate').innerText = s.played ? Math.round((s.wins/s.played)*100) : 0;
+            document.getElementById('stat-streak').innerText = s.streak || 0;
+            document.getElementById('stat-max').innerText = s.maxStreak || 0;
             
-            document.getElementById('stat-played').innerText = s.played;
-            document.getElementById('stat-winrate').innerText = Math.round((s.wins/s.played)*100);
-            document.getElementById('stat-streak').innerText = s.streak;
-            document.getElementById('stat-max').innerText = s.maxStreak;
+            document.getElementById('share-btn').style.display = 'block';
+            document.getElementById('stats-container').style.display = 'block';
+            let rank = score === 5 ? "완벽합니다! 🔥" : score >= 3 ? "훌륭해요! 👍" : "아쉬워요! 💦";
+            document.getElementById('result-msg').innerText = `${rank}\n(${score}/5 정답)`;
         }
 
         function shareResult() {
-            const cards = Array.from(container.children);
-            const userDates = cards.map(c => c.dataset.date);
-            const sortedDates = [...userDates].sort();
-            let emojis = userDates.map((date, i) => date === sortedDates[i] ? "🟩" : "🟥").join("");
-            const text = `소리MAD 타임라인 #${daysElapsedGlobal}\n${emojis}\n${window.location.href}`;
+            const history = JSON.parse(localStorage.getItem('soriHistory') || '{}');
+            const data = history[daysElapsedGlobal];
+            const sorted = [...data.order].sort();
+            let emojis = data.order.map((d, i) => d === sorted[i] ? "🟩" : "🟥").join("");
+            const text = `소리MAD 타임라인 #${daysElapsedGlobal}\n${emojis}\n정답: ${data.score}/5\n${window.location.href}`;
             navigator.clipboard.writeText(text).then(() => alert("결과가 복사되었습니다!"));
         }
 
-        function openArchive() { document.getElementById('archiveModal').style.display = 'block'; }
-        function closeModal(id) { document.getElementById('archiveModal').style.display = 'none'; document.getElementById('helpModal').style.display = 'none'; }
+        function openArchive() {
+            const modal = document.getElementById('archiveModal');
+            const dateInput = document.getElementById('archive-date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.max = today; // 미래 날짜 선택 방지 (HTML5)
+            modal.style.display = 'block';
+        }
+        function closeModal() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
         function jumpToDate() {
             const val = document.getElementById('archive-date').value;
             if (val) { loadGame(new Date(val)); closeModal(); }
         }
-        document.getElementById('help-icon').onclick = () => document.getElementById('helpModal').style.display = 'block';
     </script>
 </body>
 </html>
