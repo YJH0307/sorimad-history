@@ -3,37 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <title>음MAD 타임라인 퍼즐</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background: #121213; color: #eee; display: flex; flex-direction: column; align-items: center; padding: 20px; touch-action: manipulation; }
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background: #121213; 
+            color: #eee; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            /* 텍스트 선택 방지 */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            overflow-x: hidden;
+        }
         h1 { font-weight: 900; margin-bottom: 5px; cursor: pointer; display: flex; align-items: center; }
         .date-display { color: #538d4e; font-weight: bold; margin-bottom: 5px; }
         .game-no { font-size: 12px; color: #818384; margin-bottom: 10px; }
-        p { color: #818384; font-size: 14px; text-align: center; }
+        p { color: #818384; font-size: 14px; text-align: center; margin-bottom: 10px; }
         
-        /* 도움말 버튼 */
         #help-icon { font-size: 16px; color: #538d4e; cursor: pointer; margin-left: 10px; border: 1px solid #538d4e; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; justify-content: center; align-items: center; font-weight: bold; }
         
         #quiz-container { width: 100%; max-width: 450px; margin-top: 10px; }
         
-        /* 카드 기본 설정 */
-        .video-card { perspective: 1000px; transition: transform 0.6s; transform-style: preserve-3d; position: relative; height: 85px; margin-bottom: 12px; cursor: grab; }
+        /* 카드 스타일 및 드래그 최적화 */
+        .video-card { 
+            perspective: 1000px; 
+            transition: transform 0.6s; 
+            transform-style: preserve-3d; 
+            position: relative; 
+            height: 85px; 
+            margin-bottom: 12px; 
+            cursor: grab;
+            touch-action: none; /* 브라우저 스크롤 간섭 방지 */
+        }
+        .video-card:active { cursor: grabbing; }
         .video-card.no-drag { cursor: pointer; }
         .video-card.flipped { transform: rotateX(180deg); }
         
-        /* 드래그 중 잔상 방지 (뒷면 숨기기) */
-        .sortable-ghost { opacity: 0.4; }
-        .sortable-drag { opacity: 0.9; }
-        .sortable-drag .card-back, .sortable-ghost .card-back { display: none !important; }
+        /* 드래그 중 스타일 */
+        .sortable-ghost { opacity: 0; } /* 이동할 자리는 투명하게 */
+        .sortable-drag { opacity: 0.9; transform: scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .sortable-drag .card-back { display: none !important; }
 
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid #3a3a3c; box-sizing: border-box; }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid #3a3a3c; box-sizing: border-box; pointer-events: none; }
         
         .card-front { background: #1a1a1b; z-index: 2; }
-        .thumbnail { width: 90px; height: 50px; background: #333; border-radius: 4px; margin-right: 15px; overflow: hidden; flex-shrink: 0; pointer-events: none; }
+        .thumbnail { width: 90px; height: 50px; background: #333; border-radius: 4px; margin-right: 15px; overflow: hidden; flex-shrink: 0; }
         .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
-        .info { flex: 1; overflow: hidden; pointer-events: none; }
+        .info { flex: 1; overflow: hidden; }
         .video-title { font-weight: bold; font-size: 13px; margin-bottom: 3px; line-height: 1.3; color: #fff; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         .author { font-size: 11px; color: #818384; }
         
@@ -42,13 +65,11 @@
         .wrong-back { background: #e74c3c !important; border-color: #e74c3c !important; }
         
         button { margin-top: 20px; padding: 15px 40px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 30px; border: none; background: #eee; color: #121213; transition: transform 0.2s; }
-        button:active { transform: scale(0.95); }
         #share-btn { display: none; background: #538d4e; color: #fff; margin-top: 10px; }
 
         /* 모달 스타일 */
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); }
-        .modal-content { background: #1a1a1b; margin: 20% auto; padding: 25px; border: 1px solid #3a3a3c; width: 85%; max-width: 350px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .modal-content h2 { margin-top: 0; color: #538d4e; font-size: 20px; }
+        .modal-content { background: #1a1a1b; margin: 20% auto; padding: 25px; border: 1px solid #3a3a3c; width: 85%; max-width: 350px; border-radius: 15px; text-align: center; }
         .modal-content ul { text-align: left; font-size: 14px; line-height: 1.8; color: #ccc; padding-left: 10px; list-style-position: inside; }
         .close-btn { background: #538d4e; padding: 10px 30px; border-radius: 20px; cursor: pointer; margin-top: 20px; display: inline-block; font-weight: bold; color: white; }
     </style>
@@ -72,9 +93,8 @@
         <div class="modal-content">
             <h2>게임 방법</h2>
             <ul>
-                <li>음MAD 영상 5개가 랜덤으로 등장합니다.</li>
-                <li><b>위에서 아래로</b> 시간 순서대로 나열하세요.</li>
-                <li>(위: 가장 예전 영상, 아래: 최신 영상)</li>
+                <li>영상 5개를 <b>업로드 날짜 순서</b>대로 나열하세요.</li>
+                <li>위: 가장 오래된 영상, 아래: 최신 영상</li>
                 <li>정답 확인 후 카드를 클릭해 날짜를 확인하세요!</li>
             </ul>
             <div class="close-btn" onclick="closeHelp()">알겠어요!</div>
@@ -89,18 +109,23 @@
         let daysElapsedGlobal = 0;
         const container = document.getElementById('quiz-container');
 
+        // 드래그 최적화 설정
         sortableInstance = new Sortable(container, { 
             animation: 150,
+            delay: 0,
+            touchStartThreshold: 5, // 약간의 움직임은 드래그로 인식
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
-            forceFallback: true // 모바일 잔상 방지 강화
+            forceFallback: true,
+            onStart: function() { document.body.style.overflow = 'hidden'; }, // 드래그 중 스크롤 방지
+            onEnd: function() { document.body.style.overflow = ''; }
         });
 
         function getDaysSinceStart() {
-            const startDate = new Date("2026-02-05"); 
+            const startDate = new Date("2026-02-05"); // 오늘부터 #1로 시작하도록 수정됨
             const today = new Date();
             const diff = today - startDate;
-            return Math.floor(diff / (1000 * 60 * 60 * 24)); 
+            return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1; 
         }
 
         fetch(sheetUrl).then(r => r.text()).then(csv => {
@@ -144,6 +169,8 @@
                 const card = document.createElement('div');
                 card.className = 'video-card';
                 card.dataset.date = item.date;
+                // 카드 내부 텍스트 선택 방지 위해 mousedown 이벤트 제어
+                card.onmousedown = (e) => { if(!isGameFinished) e.preventDefault(); };
                 card.onclick = function() { if (isGameFinished) this.classList.toggle('flipped'); };
                 card.innerHTML = `
                     <div class="card-face card-front">
@@ -173,13 +200,11 @@
                     if (isCorrect) { backFace.classList.add('correct-back'); resultEmojis += "🟩"; correctCount++; }
                     else { backFace.classList.add('wrong-back'); resultEmojis += "🟥"; }
                     card.classList.add('flipped');
-                    
                     if (i === cards.length - 1) {
                         setTimeout(() => {
                             let rank = "정진이 더 필요합니다... 💦";
                             if (correctCount === 5) rank = "진정한 음MAD 고수! 🔥";
                             else if (correctCount >= 3) rank = "상당한 지식이군요! 👍";
-                            
                             document.getElementById('result-msg').innerText = `${rank}\n(${correctCount}/5 정답)`;
                             document.getElementById('result-msg').dataset.emojis = resultEmojis;
                             document.getElementById('share-btn').style.display = 'block';
@@ -196,19 +221,8 @@
             navigator.clipboard.writeText(text).then(() => alert("결과가 복사되었습니다!"));
         }
 
-        // 모달 및 제목 이벤트 수정
-        document.getElementById('game-title').onclick = function(e) {
-            // help-icon을 누른 게 아닐 때만 새로고침
-            if (e.target.id !== 'help-icon') {
-                location.reload();
-            }
-        };
-
-        document.getElementById('help-icon').onclick = function(e) {
-            e.stopPropagation(); // 제목 클릭 이벤트가 발생하는 것을 막음
-            document.getElementById('helpModal').style.display = 'block';
-        };
-
+        document.getElementById('game-title').onclick = (e) => { if (e.target.id !== 'help-icon') location.reload(); };
+        document.getElementById('help-icon').onclick = (e) => { e.stopPropagation(); document.getElementById('helpModal').style.display = 'block'; };
         function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
         window.onclick = (e) => { if (e.target.className === 'modal') closeHelp(); }
     </script>
