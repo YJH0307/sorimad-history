@@ -20,12 +20,11 @@
             position: relative;
             height: 85px;
             margin-bottom: 12px;
-            cursor: grab; /* 기본은 드래그 커서 */
+            cursor: grab;
         }
 
-        /* 결과 확인 후 드래그 금지될 때의 커서 */
+        /* 결과 확인 후 드래그 금지될 때의 스타일 */
         .video-card.no-drag { cursor: pointer; }
-
         .video-card.flipped { transform: rotateX(180deg); }
 
         .card-face {
@@ -76,21 +75,24 @@
 
     <button id="check-btn">정답 확인</button>
     <button id="share-btn" onclick="shareResult()">결과 복사하기</button>
-    <p id="result-msg" style="margin-top: 20px; font-weight: bold;"></p>
+    <p id="result-msg" style="margin-top: 20px; font-weight: bold; text-align: center;"></p>
 
     <script>
+        // === [설정] 본인의 구글 시트 CSV 링크를 여기에 넣으세요 ===
         const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_h3u-l5vbxuwZXttKmeieqqxIwFBuL8nNu7VBfeWGLy9eP8EN9dNGGO3kVMmdmIvPvmqaYzneJU8E/pub?gid=0&single=true&output=csv";
 
         let allData = [];
-        let sortableInstance; // 드래그 제어를 위한 변수
+        let sortableInstance;
+        let isGameFinished = false; // 게임 종료 상태 변수
         const container = document.getElementById('quiz-container');
 
-        // 1. 드래그 기능 초기화
+        // 드래그 기능 초기화
         sortableInstance = new Sortable(container, { 
             animation: 150,
             ghostClass: "sortable-ghost"
         });
 
+        // 데이터 가져오기
         fetch(sheetUrl)
             .then(r => r.text())
             .then(csv => {
@@ -100,10 +102,17 @@
                     return { title: cols[1], author: cols[2], date: cols[3], youtubeId: cols[4] };
                 }).filter(item => item.date && item.date.includes('-'));
                 startNewGame();
+            }).catch(e => {
+                container.innerHTML = "<p>데이터 로딩 실패. 시트 링크를 확인해주세요.</p>";
             });
 
         function startNewGame() {
-            if (allData.length < 5) return;
+            if (allData.length < 5) {
+                container.innerHTML = "<p>데이터가 부족합니다. (최소 5개 필요)</p>";
+                return;
+            }
+            isGameFinished = false;
+
             const currentQuiz = [...allData].sort(() => Math.random() - 0.5).slice(0, 5);
             const displayList = [...currentQuiz].sort(() => Math.random() - 0.5);
             
@@ -113,9 +122,11 @@
                 card.className = 'video-card';
                 card.dataset.date = item.date;
                 
-                // 클릭 시 뒤집기 로직 (항상 활성화)
+                // 클릭 이벤트: 게임 종료 후에만 뒤집기 허용
                 card.onclick = function() {
-                    this.classList.toggle('flipped');
+                    if (isGameFinished) {
+                        this.classList.toggle('flipped');
+                    }
                 };
 
                 card.innerHTML = `
@@ -133,8 +144,8 @@
         }
 
         document.getElementById('check-btn').onclick = function() {
-            // 2. [핵심] 결과 확인 시 드래그 기능 끄기
             sortableInstance.option("disabled", true);
+            isGameFinished = true; // 이제부터 클릭 뒤집기 활성화
 
             const cards = Array.from(container.children);
             const userDates = cards.map(c => c.dataset.date);
@@ -143,7 +154,6 @@
             let resultEmojis = "";
             
             cards.forEach((card, i) => {
-                // 클릭 커서로 변경
                 card.classList.add('no-drag');
 
                 setTimeout(() => {
@@ -162,7 +172,7 @@
 
                     if (i === cards.length - 1) {
                         setTimeout(() => {
-                            document.getElementById('result-msg').innerText = "결과가 생성되었습니다!";
+                            document.getElementById('result-msg').innerHTML = "정답 확인 완료!<br>카드를 클릭하면 영상 정보를 다시 볼 수 있습니다.";
                             document.getElementById('result-msg').dataset.emojis = resultEmojis;
                             document.getElementById('share-btn').style.display = 'block';
                         }, 600);
