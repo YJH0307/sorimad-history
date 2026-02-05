@@ -7,28 +7,37 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background: #121213; color: #eee; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        h1 { font-weight: 900; margin-bottom: 5px; cursor: pointer; }
+        body { font-family: 'Noto Sans KR', sans-serif; background: #121213; color: #eee; display: flex; flex-direction: column; align-items: center; padding: 20px; touch-action: manipulation; }
+        h1 { font-weight: 900; margin-bottom: 5px; cursor: pointer; display: flex; align-items: center; }
         .date-display { color: #538d4e; font-weight: bold; margin-bottom: 5px; }
         .game-no { font-size: 12px; color: #818384; margin-bottom: 10px; }
         p { color: #818384; font-size: 14px; text-align: center; }
         
         /* 도움말 버튼 */
-        #help-icon { font-size: 20px; color: #538d4e; cursor: pointer; margin-left: 10px; border: 1px solid #538d4e; border-radius: 50%; width: 25px; height: 25px; display: inline-flex; justify-content: center; align-items: center; }
+        #help-icon { font-size: 16px; color: #538d4e; cursor: pointer; margin-left: 10px; border: 1px solid #538d4e; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; justify-content: center; align-items: center; font-weight: bold; }
         
         #quiz-container { width: 100%; max-width: 450px; margin-top: 10px; }
         
+        /* 카드 기본 설정 */
         .video-card { perspective: 1000px; transition: transform 0.6s; transform-style: preserve-3d; position: relative; height: 85px; margin-bottom: 12px; cursor: grab; }
         .video-card.no-drag { cursor: pointer; }
         .video-card.flipped { transform: rotateX(180deg); }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid #3a3a3c; box-sizing: border-box; }
-        .card-front { background: #1a1a1b; }
-        .thumbnail { width: 90px; height: 50px; background: #333; border-radius: 4px; margin-right: 15px; overflow: hidden; flex-shrink: 0; }
+        
+        /* 드래그 중 잔상 방지 (뒷면 숨기기) */
+        .sortable-ghost { opacity: 0.4; }
+        .sortable-drag { opacity: 0.9; }
+        .sortable-drag .card-back, .sortable-ghost .card-back { display: none !important; }
+
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid #3a3a3c; box-sizing: border-box; }
+        
+        .card-front { background: #1a1a1b; z-index: 2; }
+        .thumbnail { width: 90px; height: 50px; background: #333; border-radius: 4px; margin-right: 15px; overflow: hidden; flex-shrink: 0; pointer-events: none; }
         .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
-        .info { flex: 1; overflow: hidden; }
+        .info { flex: 1; overflow: hidden; pointer-events: none; }
         .video-title { font-weight: bold; font-size: 13px; margin-bottom: 3px; line-height: 1.3; color: #fff; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         .author { font-size: 11px; color: #818384; }
-        .card-back { background: #2e2e2e; transform: rotateX(180deg); justify-content: center; font-size: 18px; font-weight: 900; color: #fff; }
+        
+        .card-back { background: #2e2e2e; transform: rotateX(180deg); justify-content: center; font-size: 18px; font-weight: 900; color: #fff; z-index: 1; }
         .correct-back { background: #538d4e !important; border-color: #538d4e !important; }
         .wrong-back { background: #e74c3c !important; border-color: #e74c3c !important; }
         
@@ -36,17 +45,17 @@
         button:active { transform: scale(0.95); }
         #share-btn { display: none; background: #538d4e; color: #fff; margin-top: 10px; }
 
-        /* 도움말 팝업 스타일 */
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
-        .modal-content { background: #1a1a1b; margin: 15% auto; padding: 25px; border: 1px solid #3a3a3c; width: 80%; max-width: 400px; border-radius: 15px; text-align: center; }
-        .modal-content h2 { margin-top: 0; color: #538d4e; }
-        .modal-content ul { text-align: left; font-size: 14px; line-height: 1.8; color: #ccc; }
-        .close-btn { background: #538d4e; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-top: 15px; display: inline-block; font-weight: bold; }
+        /* 모달 스타일 */
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); }
+        .modal-content { background: #1a1a1b; margin: 20% auto; padding: 25px; border: 1px solid #3a3a3c; width: 85%; max-width: 350px; border-radius: 15px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-content h2 { margin-top: 0; color: #538d4e; font-size: 20px; }
+        .modal-content ul { text-align: left; font-size: 14px; line-height: 1.8; color: #ccc; padding-left: 10px; list-style-position: inside; }
+        .close-btn { background: #538d4e; padding: 10px 30px; border-radius: 20px; cursor: pointer; margin-top: 20px; display: inline-block; font-weight: bold; color: white; }
     </style>
 </head>
 <body>
 
-    <h1 onclick="location.reload()">음MAD 타임라인 <span id="help-icon">?</span></h1>
+    <h1 id="game-title">음MAD 타임라인 <span id="help-icon">?</span></h1>
     <div id="today-date" class="date-display"></div>
     <div id="game-no" class="game-no"></div>
     <p>오래된 순(위) → 최신 순(아래)</p>
@@ -57,16 +66,16 @@
 
     <button id="check-btn">정답 확인</button>
     <button id="share-btn" onclick="shareResult()">결과 공유하기 (복사)</button>
-    <p id="result-msg" style="margin-top: 20px; font-weight: bold; text-align: center;"></p>
+    <p id="result-msg" style="margin-top: 20px; font-weight: bold; text-align: center; white-space: pre-wrap;"></p>
 
     <div id="helpModal" class="modal">
         <div class="modal-content">
-            <h2>음MAD 타임라인</h2>
+            <h2>게임 방법</h2>
             <ul>
-                <li>5개의 음MAD 영상을 <b>업로드 날짜 순서</b>대로 나열하세요.</li>
-                <li>위쪽이 가장 <b>오래된 영상</b>, 아래쪽이 <b>최신 영상</b>입니다.</li>
-                <li>순서를 맞춘 뒤 [정답 확인]을 눌러보세요.</li>
-                <li>정답 확인 후 카드를 클릭하면 상세 정보를 볼 수 있습니다.</li>
+                <li>음MAD 영상 5개가 랜덤으로 등장합니다.</li>
+                <li><b>위에서 아래로</b> 시간 순서대로 나열하세요.</li>
+                <li>(위: 가장 예전 영상, 아래: 최신 영상)</li>
+                <li>정답 확인 후 카드를 클릭해 날짜를 확인하세요!</li>
             </ul>
             <div class="close-btn" onclick="closeHelp()">알겠어요!</div>
         </div>
@@ -80,7 +89,12 @@
         let daysElapsedGlobal = 0;
         const container = document.getElementById('quiz-container');
 
-        sortableInstance = new Sortable(container, { animation: 150 });
+        sortableInstance = new Sortable(container, { 
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            forceFallback: true // 모바일 잔상 방지 강화
+        });
 
         function getDaysSinceStart() {
             const startDate = new Date("2024-01-01"); 
@@ -162,11 +176,11 @@
                     
                     if (i === cards.length - 1) {
                         setTimeout(() => {
-                            let rank = "조금 더 정진이 필요합니다!";
+                            let rank = "정진이 더 필요합니다... 💦";
                             if (correctCount === 5) rank = "진정한 음MAD 고수! 🔥";
                             else if (correctCount >= 3) rank = "상당한 지식이군요! 👍";
                             
-                            document.getElementById('result-msg').innerHTML = `${rank}<br>(${correctCount}/5 정답)`;
+                            document.getElementById('result-msg').innerText = `${rank}\n(${correctCount}/5 정답)`;
                             document.getElementById('result-msg').dataset.emojis = resultEmojis;
                             document.getElementById('share-btn').style.display = 'block';
                         }, 600);
@@ -182,8 +196,19 @@
             navigator.clipboard.writeText(text).then(() => alert("결과가 복사되었습니다!"));
         }
 
-        // 모달 제어
-        document.getElementById('help-icon').onclick = () => document.getElementById('helpModal').style.display = 'block';
+        // 모달 및 제목 이벤트 수정
+        document.getElementById('game-title').onclick = function(e) {
+            // help-icon을 누른 게 아닐 때만 새로고침
+            if (e.target.id !== 'help-icon') {
+                location.reload();
+            }
+        };
+
+        document.getElementById('help-icon').onclick = function(e) {
+            e.stopPropagation(); // 제목 클릭 이벤트가 발생하는 것을 막음
+            document.getElementById('helpModal').style.display = 'block';
+        };
+
         function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
         window.onclick = (e) => { if (e.target.className === 'modal') closeHelp(); }
     </script>
