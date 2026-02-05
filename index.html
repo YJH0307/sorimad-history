@@ -12,18 +12,13 @@
         .date-display { color: #538d4e; font-weight: bold; margin-bottom: 5px; }
         .game-no { font-size: 12px; color: #818384; margin-bottom: 10px; cursor: pointer; text-decoration: underline; }
         p { color: #818384; font-size: 14px; text-align: center; margin-bottom: 10px; }
-        
         #help-icon { font-size: 16px; color: #538d4e; cursor: pointer; margin-left: 10px; border: 1px solid #538d4e; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; justify-content: center; align-items: center; font-weight: bold; }
-        
         #quiz-container { width: 100%; max-width: 450px; margin-top: 10px; }
-        
         .video-card { perspective: 1000px; transform-style: preserve-3d; position: relative; height: 85px; margin-bottom: 12px; cursor: grab; touch-action: none; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
         .video-card.flipped { transform: rotateX(180deg); }
         .video-card.no-drag { cursor: default; }
-        
         .sortable-ghost { opacity: 0.1 !important; background: #3a3a3c !important; border-radius: 8px; }
         .sortable-drag { opacity: 1 !important; transform: scale(1.05); box-shadow: 0 15px 30px rgba(0,0,0,0.8); z-index: 1000; transition: none !important; }
-
         .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid #3a3a3c; box-sizing: border-box; pointer-events: none; }
         .card-front { background: #1a1a1b; z-index: 2; }
         .thumbnail { width: 90px; height: 50px; background: #333; border-radius: 4px; margin-right: 15px; overflow: hidden; flex-shrink: 0; }
@@ -31,24 +26,19 @@
         .info { flex: 1; overflow: hidden; }
         .video-title { font-weight: bold; font-size: 13px; margin-bottom: 3px; line-height: 1.3; color: #fff; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         .author { font-size: 11px; color: #818384; }
-        
         .card-back { background: #2e2e2e; transform: rotateX(180deg); flex-direction: column; justify-content: center; color: #fff; z-index: 1; pointer-events: auto; }
         .back-date { font-size: 18px; font-weight: 900; margin-bottom: 5px; }
         .yt-link { font-size: 11px; color: #aaa; text-decoration: none; border: 1px solid #555; padding: 2px 8px; border-radius: 10px; background: #333; }
-        
         .correct-back { background: #538d4e !important; border-color: #538d4e !important; }
         .wrong-back { background: #e74c3c !important; border-color: #e74c3c !important; }
-        
         button { margin-top: 10px; padding: 15px 40px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 30px; border: none; background: #eee; color: #121213; transition: transform 0.2s; }
         button:disabled { background: #3a3a3c; color: #818384; cursor: not-allowed; }
         #share-btn { display: none; background: #538d4e; color: #fff; }
-
         #stats-container { display: none; margin-top: 20px; text-align: center; background: #1a1a1b; padding: 15px; border-radius: 15px; width: 100%; max-width: 400px; border: 1px solid #3a3a3c; }
         .stat-grid { display: flex; justify-content: space-around; margin-bottom: 15px; }
         .stat-box { display: flex; flex-direction: column; }
         .stat-val { font-size: 20px; font-weight: 900; }
         .stat-lbl { font-size: 10px; color: #818384; }
-
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); }
         .modal-content { background: #1a1a1b; margin: 20% auto; padding: 25px; border: 1px solid #3a3a3c; width: 85%; max-width: 350px; border-radius: 15px; text-align: center; }
         .close-btn { background: #538d4e; padding: 10px 30px; border-radius: 20px; cursor: pointer; margin-top: 20px; display: inline-block; font-weight: bold; color: white; }
@@ -111,37 +101,47 @@
             onEnd: () => document.body.style.overflow = ''
         });
 
-        function getDaysSinceStart(d) {
-            const start = new Date("2026-02-05");
-            start.setHours(0, 0, 0, 0); // 기준일 시간 초기화
-            
-            const current = new Date(d);
-            current.setHours(0, 0, 0, 0); // 비교 대상 날짜 시간 초기화
-            
-            const diff = Math.floor((current - start) / (1000 * 60 * 60 * 24));
-            return diff + 1;
+        // 날짜를 숫자(YYYYMMDD)로 변환하여 안전하게 비교
+        function getDateValue(d) {
+            const date = new Date(d);
+            return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
         }
 
-        function loadGame(date) {
-            // [수정] 오늘 날짜를 가져와서 시간을 00:00:00으로 맞춥니다.
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            const checkDate = new Date(date);
-            checkDate.setHours(0, 0, 0, 0);
+        function getDaysSinceStart(d) {
+            const start = new Date("2026-02-05");
+            start.setHours(0,0,0,0);
+            const current = new Date(d);
+            current.setHours(0,0,0,0);
+            return Math.floor((current - start) / (1000 * 60 * 60 * 24)) + 1;
+        }
 
-            // 오늘보다 이후 날짜인지 정확히 비교
-            if (checkDate.getTime() > today.getTime()) { 
-                alert("미래의 문제는 미리 풀 수 없습니다!"); 
-                // 알림 후 오늘 날짜로 강제 로드
+        // 시트 데이터를 먼저 가져온 뒤 게임 실행
+        fetch(sheetUrl).then(r => r.text()).then(csv => {
+            const lines = csv.replace(/^\uFEFF/, "").split(/\r?\n/);
+            allData = lines.map(line => {
+                const c = line.split(",");
+                return { title: c[1], author: c[2], date: c[3], youtubeId: c[4] };
+            }).filter(item => item.date && item.date.includes('-'));
+            
+            // 데이터 로드가 완료되면 오늘 날짜로 게임 시작
+            loadGame(new Date());
+        });
+
+        function loadGame(date) {
+            if (allData.length === 0) return; // 데이터가 아직 없으면 중단
+
+            const todayVal = getDateValue(new Date());
+            const targetVal = getDateValue(date);
+
+            // 미래 날짜 방지 (숫자 비교로 더 정확하게)
+            if (targetVal > todayVal) {
+                alert("미래의 문제는 미리 풀 수 없습니다!");
                 loadGame(new Date());
-                return; 
+                return;
             }
 
-            targetDate = checkDate;
+            targetDate = new Date(date);
             daysElapsedGlobal = getDaysSinceStart(targetDate);
-            
-            // 나머지 로직 동일...
             document.getElementById('today-date').innerText = targetDate.toLocaleDateString();
             document.getElementById('game-no').innerText = `#소리MAD타임라인_${daysElapsedGlobal} (날짜변경)`;
             
@@ -164,7 +164,6 @@
                 if (!usedDates.has(item.date)) { selection.push(item); usedDates.add(item.date); }
                 currentIndex++; attempts++;
             }
-            // 섞기
             return selection.sort((a, b) => ((dayNo + a.title.length) % 10) - 5);
         }
 
@@ -175,11 +174,8 @@
             document.getElementById('share-btn').style.display = 'none';
             document.getElementById('stats-container').style.display = 'none';
             document.getElementById('game-status').innerText = "오래된 순(위) → 최신 순(아래)";
-            
             container.innerHTML = "";
-            list.forEach(item => {
-                container.appendChild(createCard(item));
-            });
+            list.forEach(item => container.appendChild(createCard(item)));
         }
 
         function renderSolvedGame(list, solvedData) {
@@ -187,15 +183,9 @@
             sortableInstance.option("disabled", true);
             document.getElementById('check-btn').style.display = 'none';
             document.getElementById('game-status').innerText = "이미 완료한 정답입니다.";
-            
-            // 저장된 순서대로 카드 배치
-            const sortedList = [...list].sort((a,b) => {
-                return solvedData.order.indexOf(a.date) - solvedData.order.indexOf(b.date);
-            });
-
+            const sortedList = [...list].sort((a,b) => solvedData.order.indexOf(a.date) - solvedData.order.indexOf(b.date));
             container.innerHTML = "";
             const correctDates = [...solvedData.order].sort();
-
             sortedList.forEach((item, i) => {
                 const card = createCard(item);
                 const isCorrect = item.date === correctDates[i];
@@ -203,7 +193,6 @@
                 card.classList.add('flipped', 'no-drag');
                 container.appendChild(card);
             });
-            
             showStatsUI(solvedData.score);
         }
 
@@ -211,16 +200,7 @@
             const card = document.createElement('div');
             card.className = 'video-card'; card.dataset.date = item.date;
             card.onclick = function() { if (isGameFinished) this.classList.toggle('flipped'); };
-            card.innerHTML = `
-                <div class="card-face card-front">
-                    <div class="thumbnail"><img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg"></div>
-                    <div class="info"><div class="video-title">${item.title}</div><div class="author">${item.author}</div></div>
-                </div>
-                <div class="card-face card-back">
-                    <div class="back-date">${item.date}</div>
-                    <a href="https://youtu.be/${item.youtubeId}" target="_blank" class="yt-link" onclick="event.stopPropagation()">영상 보기</a>
-                </div>
-            `;
+            card.innerHTML = `<div class="card-face card-front"><div class="thumbnail"><img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg"></div><div class="info"><div class="video-title">${item.title}</div><div class="author">${item.author}</div></div></div><div class="card-face card-back"><div class="back-date">${item.date}</div><a href="https://youtu.be/${item.youtubeId}" target="_blank" class="yt-link" onclick="event.stopPropagation()">영상 보기</a></div>`;
             return card;
         }
 
@@ -228,26 +208,17 @@
             if (isGameFinished) return;
             sortableInstance.option("disabled", true);
             isGameFinished = true;
-            
             const cards = Array.from(container.children);
             const userDates = cards.map(c => c.dataset.date);
             const sortedDates = [...userDates].sort();
             let score = 0;
-            
             cards.forEach((card, i) => {
                 setTimeout(() => {
                     const isCorrect = userDates[i] === sortedDates[i];
-                    if (isCorrect) {
-                        card.querySelector('.card-back').classList.add('correct-back');
-                        score++;
-                    } else {
-                        card.querySelector('.card-back').classList.add('wrong-back');
-                    }
+                    if (isCorrect) { card.querySelector('.card-back').classList.add('correct-back'); score++; }
+                    else { card.querySelector('.card-back').classList.add('wrong-back'); }
                     card.classList.add('flipped', 'no-drag');
-                    if (i === cards.length - 1) {
-                        saveResult(score, userDates);
-                        showStatsUI(score);
-                    }
+                    if (i === cards.length - 1) { saveResult(score, userDates); showStatsUI(score); }
                 }, i * 200);
             });
             this.style.display = 'none';
@@ -255,9 +226,9 @@
 
         function saveResult(score, order) {
             const history = JSON.parse(localStorage.getItem('soriHistory') || '{}');
+            if(history[daysElapsedGlobal]) return; // 중복 저장 방지
             history[daysElapsedGlobal] = { score, order, date: new Date().toLocaleDateString() };
             localStorage.setItem('soriHistory', JSON.stringify(history));
-
             let s = JSON.parse(localStorage.getItem('soriStats') || '{"played":0,"wins":0,"streak":0,"maxStreak":0}');
             s.played++;
             if (score === 5) { s.wins++; s.streak++; } else { s.streak = 0; }
@@ -271,7 +242,6 @@
             document.getElementById('stat-winrate').innerText = s.played ? Math.round((s.wins/s.played)*100) : 0;
             document.getElementById('stat-streak').innerText = s.streak || 0;
             document.getElementById('stat-max').innerText = s.maxStreak || 0;
-            
             document.getElementById('share-btn').style.display = 'block';
             document.getElementById('stats-container').style.display = 'block';
             let rank = score === 5 ? "완벽합니다! 🔥" : score >= 3 ? "훌륭해요! 👍" : "아쉬워요! 💦";
@@ -290,8 +260,7 @@
         function openArchive() {
             const modal = document.getElementById('archiveModal');
             const dateInput = document.getElementById('archive-date');
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.max = today; // 미래 날짜 선택 방지 (HTML5)
+            dateInput.max = new Date().toISOString().split('T')[0];
             modal.style.display = 'block';
         }
         function closeModal() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
@@ -299,6 +268,7 @@
             const val = document.getElementById('archive-date').value;
             if (val) { loadGame(new Date(val)); closeModal(); }
         }
+        document.getElementById('help-icon').onclick = () => document.getElementById('helpModal').style.display = 'block';
     </script>
 </body>
 </html>
