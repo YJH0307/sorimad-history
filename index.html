@@ -61,9 +61,16 @@
             .then(csv => {
                 const lines = csv.replace(/^\uFEFF/, "").split(/\r?\n/);
                 allData = lines.map(line => {
-                    const cols = line.split(",");
-                    return { title: cols[1], author: cols[2], date: cols[3], youtubeId: cols[4] };
-                }).filter(item => item.date && item.date.includes('-'));
+                const cols = line.split(",");
+    // 시트 구조: A(URL), B(제목), C(투고자), D(날짜), E(ID)
+    // 따라서 제목은 cols[1], 투고자는 cols[2], 날짜는 cols[3], ID는 cols[4]입니다.
+    return { 
+        title: cols[1], 
+        author: cols[2], 
+        date: cols[3], 
+        youtubeId: cols[4] 
+    };
+}).filter(item => item.date && item.date.includes('-'));
                 
                 startNewGame();
             }).catch(e => {
