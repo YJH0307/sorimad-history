@@ -20,7 +20,7 @@
             position: relative;
             height: 85px;
             margin-bottom: 12px;
-            cursor: grab;
+            cursor: pointer;
         }
 
         .video-card.flipped { transform: rotateX(180deg); }
@@ -113,9 +113,7 @@
                 return;
             }
 
-            // 무작위 5개 선정 
             const currentQuiz = [...allData].sort(() => Math.random() - 0.5).slice(0, 5);
-            // 사용자에게는 다시 섞어서 표시
             const displayList = [...currentQuiz].sort(() => Math.random() - 0.5);
             
             container.innerHTML = "";
@@ -124,7 +122,13 @@
                 card.className = 'video-card';
                 card.dataset.date = item.date;
                 
-                // 앞면과 뒷면 구조 통합
+                // [추가] 클릭 시 뒤집기 기능
+                card.onclick = function() {
+                    // 결과 확인 전에는 클릭으로 뒤집히지 않게 하려면 
+                    // 아래 if문을 사용하고, 상관없다면 그냥 toggle만 남기세요.
+                    this.classList.toggle('flipped');
+                };
+
                 card.innerHTML = `
                     <div class="card-face card-front">
                         <div class="thumbnail"><img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg"></div>
