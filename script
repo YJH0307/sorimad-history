@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>음MAD 타임라인 퍼즐</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;900&display=swap" rel="stylesheet">
+    <style>
+        /* === 스타일 설정 === */
+        body { font-family: 'Noto Sans KR', sans-serif; background: #121213; color: #eee; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        h1 { font-weight: 900; margin-bottom: 5px; }
+        #quiz-container { width: 100%; max-width: 450px; margin-top: 20px; }
+        
+        .video-card {
+            background: #1a1a1b; border: 1px solid #3a3a3c; border-radius: 8px;
+            padding: 12px; margin-bottom: 12px; cursor: grab;
+            display: flex; align-items: center; transition: background 0.2s;
+        }
+        .thumbnail { width: 100px; height: 56px; background: #333; border-radius: 4px; margin-right: 15px; overflow: hidden; flex-shrink: 0; }
+        .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        .info { flex: 1; }
+        .video-title { font-weight: bold; font-size: 14px; margin-bottom: 4px; line-height: 1.4; }
+        .author { font-size: 12px; color: #818384; }
+
+        .correct { border-color: #538d4e; background: #1b2e1b; }
+        .wrong { border-color: #e74c3c; background: #2e1b1b; }
+        
+        button { margin-top: 20px; padding: 15px 40px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 30px; border: none; background: #eee; color: #121213; }
+        #share-btn { display: none; background: #538d4e; color: #fff; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>음MAD 타임라인</h1>
+    <p>오래된 순서(위)에서 최신 순(아래)으로 드래그!</p>
+
+    <div id="quiz-container">
+        <p>데이터를 불러오는 중...</p>
+    </div>
+
+    <button id="check-btn">정답 확인</button>
+    <button id="share-btn" onclick="shareResult()">결과 공유</button>
+    <p id="result-msg" style="margin-top: 20px; font-weight: bold;"></p>
+
+    <script>
+        // === 설정: 구글 시트 CSV 링크를 여기에 넣으세요 ===
+        const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_h3u-l5vbxuwZXttKmeieqqxIwFBuL8nNu7VBfeWGLy9eP8EN9dNGGO3kVMmdmIvPvmqaYzneJU8E/pub?gid=0&single=true&output=csv";
+
+        let allData = [];
+        let currentQuiz = [];
+        const container = document.getElementById('quiz-container');
+
+        // 드래그 앤 드롭 활성화
+        new Sortable(container, { animation: 150 });
+
+        // 데이터 로드
+        fetch(sheetUrl)
+            .then(r => r.text())
+            .then(csv => {
+                const lines = csv.replace(/^\uFEFF/, "").split(/\r?\n/);
+                allData = lines.map(line => {
+                    const cols = line.split(",");
+                    return { title: cols[0], author: cols[1], date: cols[2], youtubeId: cols[3] };
+                }).filter(item => item.date && item.date.includes('-'));
+                
+                startNewGame();
+            });
+
+        function startNewGame() {
+            [cite_start]// 무작위로 5개 추출 [cite: 89-90]
+            currentQuiz = allData.sort(() => Math.random() - 0.5).slice(0, 5);
+            
+            container.innerHTML = "";
+            // 사용자에게는 섞인 순서로 보여줌
+            [...currentQuiz].sort(() => Math.random() - 0.5).forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                card.dataset.date = item.date;
+                card.innerHTML = `
+                    <div class="thumbnail"><img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg"></div>
+                    <div class="info">
+                        <div class="video-title">${item.title}</div>
+                        <div class="author">${item.author}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        document.getElementById('check-btn').onclick = function() {
+            const cards = Array.from(container.children);
+            const userDates = cards.map(c => c.dataset.date);
+            const sortedDates = [...userDates].sort(); // 시간순 정렬된 정답 배열
+
+            let resultEmojis = "";
+            userDates.forEach((date, i) => {
+                if (date === sortedDates[i]) {
+                    cards[i].classList.add('correct');
+                    resultEmojis += "🟩";
+                } else {
+                    cards[i].classList.add('wrong');
+                    resultEmojis += "🟥";
+                }
+                const d = cards[i].dataset.date;
+                cards[i].querySelector('.author').innerText += ` | 개시일: ${d}`;
+            });
+
+            this.style.display = 'none';
+            document.getElementById('share-btn').style.display = 'block';
+            document.getElementById('result-msg').dataset.emojis = resultEmojis;
+            document.getElementById('result-msg').innerText = "결과가 표시되었습니다.";
+        };
+
+        function shareResult() {
+            const emojis = document.getElementById('result-msg').dataset.emojis;
+            const text = `음MAD 타임라인 퍼즐 결과\n${emojis}\nhttps://${location.hostname}${location.pathname}`;
+            navigator.clipboard.writeText(text).then(() => alert("결과가 복사되었습니다!"));
+        }
+    </script>
+</body>
+</html>
