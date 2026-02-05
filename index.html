@@ -8,9 +8,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; background: #121213; color: #eee; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        h1 { font-weight: 900; margin-bottom: 5px; }
-        .date-display { color: #538d4e; font-weight: bold; margin-bottom: 10px; }
+        h1 { font-weight: 900; margin-bottom: 5px; cursor: pointer; }
+        .date-display { color: #538d4e; font-weight: bold; margin-bottom: 5px; }
+        .game-no { font-size: 12px; color: #818384; margin-bottom: 10px; }
         p { color: #818384; font-size: 14px; text-align: center; }
+        
+        /* 도움말 버튼 */
+        #help-icon { font-size: 20px; color: #538d4e; cursor: pointer; margin-left: 10px; border: 1px solid #538d4e; border-radius: 50%; width: 25px; height: 25px; display: inline-flex; justify-content: center; align-items: center; }
+        
         #quiz-container { width: 100%; max-width: 450px; margin-top: 10px; }
         
         .video-card { perspective: 1000px; transition: transform 0.6s; transform-style: preserve-3d; position: relative; height: 85px; margin-bottom: 12px; cursor: grab; }
@@ -30,13 +35,21 @@
         button { margin-top: 20px; padding: 15px 40px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 30px; border: none; background: #eee; color: #121213; transition: transform 0.2s; }
         button:active { transform: scale(0.95); }
         #share-btn { display: none; background: #538d4e; color: #fff; margin-top: 10px; }
+
+        /* 도움말 팝업 스타일 */
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        .modal-content { background: #1a1a1b; margin: 15% auto; padding: 25px; border: 1px solid #3a3a3c; width: 80%; max-width: 400px; border-radius: 15px; text-align: center; }
+        .modal-content h2 { margin-top: 0; color: #538d4e; }
+        .modal-content ul { text-align: left; font-size: 14px; line-height: 1.8; color: #ccc; }
+        .close-btn { background: #538d4e; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-top: 15px; display: inline-block; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>음MAD 타임라인</h1>
+    <h1 onclick="location.reload()">음MAD 타임라인 <span id="help-icon">?</span></h1>
     <div id="today-date" class="date-display"></div>
-    <p>매일 새로운 문제! 오래된 순(위) → 최신 순(아래)</p>
+    <div id="game-no" class="game-no"></div>
+    <p>오래된 순(위) → 최신 순(아래)</p>
 
     <div id="quiz-container">
         <p>데이터를 불러오는 중...</p>
@@ -46,31 +59,29 @@
     <button id="share-btn" onclick="shareResult()">결과 공유하기 (복사)</button>
     <p id="result-msg" style="margin-top: 20px; font-weight: bold; text-align: center;"></p>
 
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <h2>음MAD 타임라인</h2>
+            <ul>
+                <li>5개의 음MAD 영상을 <b>업로드 날짜 순서</b>대로 나열하세요.</li>
+                <li>위쪽이 가장 <b>오래된 영상</b>, 아래쪽이 <b>최신 영상</b>입니다.</li>
+                <li>순서를 맞춘 뒤 [정답 확인]을 눌러보세요.</li>
+                <li>정답 확인 후 카드를 클릭하면 상세 정보를 볼 수 있습니다.</li>
+            </ul>
+            <div class="close-btn" onclick="closeHelp()">알겠어요!</div>
+        </div>
+    </div>
+
     <script>
         const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_h3u-l5vbxuwZXttKmeieqqxIwFBuL8nNu7VBfeWGLy9eP8EN9dNGGO3kVMmdmIvPvmqaYzneJU8E/pub?gid=0&single=true&output=csv";
-
         let allData = [];
         let sortableInstance;
         let isGameFinished = false;
+        let daysElapsedGlobal = 0;
         const container = document.getElementById('quiz-container');
 
-        // 드래그 기능 초기화
         sortableInstance = new Sortable(container, { animation: 150 });
 
-        // 데이터 가져오기
-        fetch(sheetUrl)
-            .then(r => r.text())
-            .then(csv => {
-                const lines = csv.replace(/^\uFEFF/, "").split(/\r?\n/);
-                allData = lines.map(line => {
-                    const cols = line.split(",");
-                    return { title: cols[1], author: cols[2], date: cols[3], youtubeId: cols[4] };
-                }).filter(item => item.date && item.date.includes('-'));
-                
-                startDailyGame();
-            });
-
-        // 기준일부터 오늘이 며칠째인지 계산
         function getDaysSinceStart() {
             const startDate = new Date("2024-01-01"); 
             const today = new Date();
@@ -78,20 +89,25 @@
             return Math.floor(diff / (1000 * 60 * 60 * 24)); 
         }
 
+        fetch(sheetUrl).then(r => r.text()).then(csv => {
+            const lines = csv.replace(/^\uFEFF/, "").split(/\r?\n/);
+            allData = lines.map(line => {
+                const cols = line.split(",");
+                return { title: cols[1], author: cols[2], date: cols[3], youtubeId: cols[4] };
+            }).filter(item => item.date && item.date.includes('-'));
+            startDailyGame();
+        });
+
         function startDailyGame() {
-            if (allData.length < 5) {
-                container.innerHTML = "<p>데이터가 부족합니다.</p>";
-                return;
-            }
-
+            if (allData.length < 5) return;
             isGameFinished = false;
-            const daysElapsed = getDaysSinceStart();
-            document.getElementById('today-date').innerText = new Date().toLocaleDateString() + " 의 문제";
+            daysElapsedGlobal = getDaysSinceStart();
+            document.getElementById('today-date').innerText = new Date().toLocaleDateString();
+            document.getElementById('game-no').innerText = `#음MAD타임라인_${daysElapsedGlobal}`;
 
-            // [핵심] 날짜 중복 방지 로집
             const dailySelection = [];
             let usedDates = new Set();
-            let currentIndex = (daysElapsed * 5) % allData.length;
+            let currentIndex = (daysElapsedGlobal * 5) % allData.length;
             let attempts = 0;
 
             while (dailySelection.length < 5 && attempts < allData.length) {
@@ -104,17 +120,8 @@
                 attempts++;
             }
 
-            // 날짜 중복 없는 5개를 못 찾은 경우를 대비한 안전장치
-            if (dailySelection.length < 5) {
-                const fallbackIndex = (daysElapsed * 5) % allData.length;
-                for (let i = 0; i < 5 - dailySelection.length; i++) {
-                    dailySelection.push(allData[(fallbackIndex + i) % allData.length]);
-                }
-            }
-
-            // 매일 일정한 방식으로 무작위 섞기
             const displayList = [...dailySelection].sort((a, b) => {
-                const sortSeed = (daysElapsed + a.title.length) % 10;
+                const sortSeed = (daysElapsedGlobal + a.title.length) % 10;
                 return sortSeed - 5;
             });
             
@@ -127,10 +134,7 @@
                 card.innerHTML = `
                     <div class="card-face card-front">
                         <div class="thumbnail"><img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg"></div>
-                        <div class="info">
-                            <div class="video-title">${item.title}</div>
-                            <div class="author">${item.author}</div>
-                        </div>
+                        <div class="info"><div class="video-title">${item.title}</div><div class="author">${item.author}</div></div>
                     </div>
                     <div class="card-face card-back">${item.date}</div>
                 `;
@@ -145,18 +149,24 @@
             const userDates = cards.map(c => c.dataset.date);
             const sortedDates = [...userDates].sort();
             let resultEmojis = "";
+            let correctCount = 0;
             
             cards.forEach((card, i) => {
                 card.classList.add('no-drag');
                 setTimeout(() => {
                     const isCorrect = userDates[i] === sortedDates[i];
                     const backFace = card.querySelector('.card-back');
-                    if (isCorrect) { backFace.classList.add('correct-back'); resultEmojis += "🟩"; }
+                    if (isCorrect) { backFace.classList.add('correct-back'); resultEmojis += "🟩"; correctCount++; }
                     else { backFace.classList.add('wrong-back'); resultEmojis += "🟥"; }
                     card.classList.add('flipped');
+                    
                     if (i === cards.length - 1) {
                         setTimeout(() => {
-                            document.getElementById('result-msg').innerHTML = "정답 확인 완료!<br>카드를 클릭하면 정보를 다시 볼 수 있습니다.";
+                            let rank = "조금 더 정진이 필요합니다!";
+                            if (correctCount === 5) rank = "진정한 음MAD 고수! 🔥";
+                            else if (correctCount >= 3) rank = "상당한 지식이군요! 👍";
+                            
+                            document.getElementById('result-msg').innerHTML = `${rank}<br>(${correctCount}/5 정답)`;
                             document.getElementById('result-msg').dataset.emojis = resultEmojis;
                             document.getElementById('share-btn').style.display = 'block';
                         }, 600);
@@ -168,10 +178,14 @@
 
         function shareResult() {
             const emojis = document.getElementById('result-msg').dataset.emojis;
-            const today = new Date().toLocaleDateString();
-            const text = `음MAD 타임라인 퍼즐 (${today})\n${emojis}\n${window.location.href}`;
+            const text = `음MAD 타임라인 #${daysElapsedGlobal}\n${emojis}\n${window.location.href}`;
             navigator.clipboard.writeText(text).then(() => alert("결과가 복사되었습니다!"));
         }
+
+        // 모달 제어
+        document.getElementById('help-icon').onclick = () => document.getElementById('helpModal').style.display = 'block';
+        function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
+        window.onclick = (e) => { if (e.target.className === 'modal') closeHelp(); }
     </script>
 </body>
 </html>
