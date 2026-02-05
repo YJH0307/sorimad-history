@@ -113,36 +113,40 @@
 
         function getDaysSinceStart(d) {
             const start = new Date("2026-02-05");
-            start.setHours(0,0,0,0);
+            start.setHours(0, 0, 0, 0); // 기준일 시간 초기화
+            
             const current = new Date(d);
-            current.setHours(0,0,0,0);
-            return Math.floor((current - start) / (1000 * 60 * 60 * 24)) + 1;
+            current.setHours(0, 0, 0, 0); // 비교 대상 날짜 시간 초기화
+            
+            const diff = Math.floor((current - start) / (1000 * 60 * 60 * 24));
+            return diff + 1;
         }
 
-        fetch(sheetUrl).then(r => r.text()).then(csv => {
-            const lines = csv.replace(/^\uFEFF/, "").split(/\r?\n/);
-            allData = lines.map(line => {
-                const c = line.split(",");
-                return { title: c[1], author: c[2], date: c[3], youtubeId: c[4] };
-            }).filter(item => item.date && item.date.includes('-'));
-            loadGame(new Date());
-        });
-
         function loadGame(date) {
-            // 미래 날짜 방지
+            // [수정] 오늘 날짜를 가져와서 시간을 00:00:00으로 맞춥니다.
             const today = new Date();
-            today.setHours(0,0,0,0);
-            if (date > today) { alert("미래의 문제는 미리 풀 수 없습니다!"); return; }
+            today.setHours(0, 0, 0, 0);
+            
+            const checkDate = new Date(date);
+            checkDate.setHours(0, 0, 0, 0);
 
-            targetDate = date;
+            // 오늘보다 이후 날짜인지 정확히 비교
+            if (checkDate.getTime() > today.getTime()) { 
+                alert("미래의 문제는 미리 풀 수 없습니다!"); 
+                // 알림 후 오늘 날짜로 강제 로드
+                loadGame(new Date());
+                return; 
+            }
+
+            targetDate = checkDate;
             daysElapsedGlobal = getDaysSinceStart(targetDate);
+            
+            // 나머지 로직 동일...
             document.getElementById('today-date').innerText = targetDate.toLocaleDateString();
             document.getElementById('game-no').innerText = `#소리MAD타임라인_${daysElapsedGlobal} (날짜변경)`;
             
-            // 도전 여부 확인 (LocalStorage)
             const history = JSON.parse(localStorage.getItem('soriHistory') || '{}');
             const alreadySolved = history[daysElapsedGlobal];
-
             const dailySelection = getDailySelection(daysElapsedGlobal);
             
             if (alreadySolved) {
