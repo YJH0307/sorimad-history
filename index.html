@@ -1,274 +1,600 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>소리MAD 타임라인 퍼즐</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background: #121213; color: #eee; display: flex; flex-direction: column; align-items: center; padding: 20px; -webkit-user-select: none; user-select: none; overflow-x: hidden; }
-        h1 { font-weight: 900; margin-bottom: 5px; cursor: pointer; display: flex; align-items: center; }
-        .date-display { color: #538d4e; font-weight: bold; margin-bottom: 5px; }
-        .game-no { font-size: 12px; color: #818384; margin-bottom: 10px; cursor: pointer; text-decoration: underline; }
-        p { color: #818384; font-size: 14px; text-align: center; margin-bottom: 10px; }
-        #help-icon { font-size: 16px; color: #538d4e; cursor: pointer; margin-left: 10px; border: 1px solid #538d4e; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; justify-content: center; align-items: center; font-weight: bold; }
-        #quiz-container { width: 100%; max-width: 450px; margin-top: 10px; }
-        .video-card { perspective: 1000px; transform-style: preserve-3d; position: relative; height: 85px; margin-bottom: 12px; cursor: grab; touch-action: none; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-        .video-card.flipped { transform: rotateX(180deg); }
-        .video-card.no-drag { cursor: default; }
-        .sortable-ghost { opacity: 0.1 !important; background: #3a3a3c !important; border-radius: 8px; }
-        .sortable-drag { opacity: 1 !important; transform: scale(1.05); box-shadow: 0 15px 30px rgba(0,0,0,0.8); z-index: 1000; transition: none !important; }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; align-items: center; padding: 12px; border-radius: 8px; border: 1px solid #3a3a3c; box-sizing: border-box; pointer-events: none; }
-        .card-front { background: #1a1a1b; z-index: 2; }
-        .thumbnail { width: 90px; height: 50px; background: #333; border-radius: 4px; margin-right: 15px; overflow: hidden; flex-shrink: 0; }
-        .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
-        .info { flex: 1; overflow: hidden; }
-        .video-title { font-weight: bold; font-size: 13px; margin-bottom: 3px; line-height: 1.3; color: #fff; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-        .author { font-size: 11px; color: #818384; }
-        .card-back { background: #2e2e2e; transform: rotateX(180deg); flex-direction: column; justify-content: center; color: #fff; z-index: 1; pointer-events: auto; }
-        .back-date { font-size: 18px; font-weight: 900; margin-bottom: 5px; }
-        .yt-link { font-size: 11px; color: #aaa; text-decoration: none; border: 1px solid #555; padding: 2px 8px; border-radius: 10px; background: #333; }
-        .correct-back { background: #538d4e !important; border-color: #538d4e !important; }
-        .wrong-back { background: #e74c3c !important; border-color: #e74c3c !important; }
-        button { margin-top: 10px; padding: 15px 40px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 30px; border: none; background: #eee; color: #121213; transition: transform 0.2s; }
-        button:disabled { background: #3a3a3c; color: #818384; cursor: not-allowed; }
-        #share-btn { display: none; background: #538d4e; color: #fff; }
-        #stats-container { display: none; margin-top: 20px; text-align: center; background: #1a1a1b; padding: 15px; border-radius: 15px; width: 100%; max-width: 400px; border: 1px solid #3a3a3c; }
-        .stat-grid { display: flex; justify-content: space-around; margin-bottom: 15px; }
-        .stat-box { display: flex; flex-direction: column; }
-        .stat-val { font-size: 20px; font-weight: 900; }
-        .stat-lbl { font-size: 10px; color: #818384; }
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); }
-        .modal-content { background: #1a1a1b; margin: 20% auto; padding: 25px; border: 1px solid #3a3a3c; width: 85%; max-width: 350px; border-radius: 15px; text-align: center; }
-        .close-btn { background: #538d4e; padding: 10px 30px; border-radius: 20px; cursor: pointer; margin-top: 20px; display: inline-block; font-weight: bold; color: white; }
-        input[type="date"] { background: #333; color: white; border: 1px solid #555; padding: 10px; border-radius: 8px; margin-top: 10px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>소리MAD 타임라인 · 더 예전? 더 최근?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="두 소리MAD 영상 중 어느 쪽이 먼저 올라왔을까? 연속으로 맞혀 최고 기록에 도전하세요.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f4f5; --fg: #17171a; --muted: #6b6e70; --surface: #ffffff; --border: #dcdde0;
+      --green: #6aaa64; --red: #e5484d; --yellow: #c9b458; --btn: #ffffff; --btn-fg: #17171a;
+      --hud-h: 52px;
+    }
+    body.dark {
+      --bg: #121213; --fg: #f0f0f0; --muted: #9a9a9c; --surface: #1d1d20; --border: #333336;
+      --green: #538d4e; --red: #d6454a; --yellow: #b59f3b;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; background: var(--bg); color: var(--fg);
+      font-family: 'Noto Sans KR', sans-serif; font-weight: 700;
+      overflow: hidden; -webkit-tap-highlight-color: transparent;
+    }
+    button { font-family: inherit; font-weight: 900; cursor: pointer; color: inherit; }
+    button:focus-visible, a:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+    .hidden { display: none !important; }
+
+    /* ---------- 상단 ---------- */
+    .hud {
+      height: var(--hud-h); display: flex; align-items: center; justify-content: space-between;
+      padding: 0 12px; gap: 8px; background: var(--bg); position: relative; z-index: 5;
+    }
+    .brand { font-weight: 900; font-size: 17px; background: none; border: none; padding: 4px; white-space: nowrap; }
+    .score { font-size: 14px; color: var(--muted); white-space: nowrap; }
+    .score b { color: var(--fg); font-size: 18px; }
+    .hud-btns { display: flex; gap: 4px; }
+    .icon-btn { width: 36px; height: 36px; border-radius: 10px; border: none; background: var(--surface); font-size: 16px; }
+
+    /* ---------- 시작 화면 ---------- */
+    .home {
+      height: calc(100% - var(--hud-h)); overflow-y: auto;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px 16px 40px; text-align: center;
+    }
+    .home h1 { font-size: clamp(30px, 8vw, 46px); font-weight: 900; margin: 0 0 6px; line-height: 1.15; }
+    .home h1 .a { color: var(--green); }
+    .home h1 .b { color: var(--yellow); }
+    .tagline { color: var(--muted); margin: 0 0 26px; font-weight: 400; }
+    .mode-btn {
+      width: 100%; max-width: 340px; padding: 16px 18px; margin: 6px 0; border-radius: 16px; border: none;
+      background: var(--green); color: #fff; font-size: 18px; text-align: left;
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    }
+    .mode-btn.alt { background: var(--surface); color: var(--fg); border: 2px solid var(--border); }
+    .mode-btn small { display: block; font-size: 12px; font-weight: 400; opacity: .85; margin-top: 2px; }
+    .mode-btn .go { font-size: 22px; }
+    .mode-btn:disabled { opacity: .7; cursor: default; }
+    .home-stats { display: flex; gap: 22px; margin-top: 22px; }
+    .home-stats div { display: flex; flex-direction: column; }
+    .home-stats b { font-size: 24px; font-weight: 900; }
+    .home-stats span { font-size: 12px; color: var(--muted); font-weight: 400; }
+    .home-links { margin-top: 26px; display: flex; gap: 16px; font-size: 13px; }
+    .home-links a, .link-btn { color: var(--muted); background: none; border: none; text-decoration: underline; text-underline-offset: 3px; font-size: 13px; font-weight: 700; padding: 4px; }
+    .load-msg { color: var(--muted); font-weight: 400; line-height: 1.7; }
+
+    /* ---------- 게임 화면 ---------- */
+    .stage { position: relative; height: calc(100% - var(--hud-h)); overflow: hidden; background: #000; }
+    .track { display: flex; height: 100%; width: 150%; will-change: transform; }
+    .track.shift { transition: transform .6s cubic-bezier(.65, 0, .35, 1); transform: translateX(-33.3333%); }
+    .panel { position: relative; flex: 0 0 33.3333%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #fff; }
+    .panel img.bgimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.06); }
+    .panel .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.72)); }
+    .panel .noimg { position: absolute; inset: 0; background: linear-gradient(135deg, #2b2b31, #15151a); }
+    .pc { position: relative; z-index: 1; width: 100%; max-width: 460px; padding: 20px 24px; text-align: center; }
+    .p-title {
+      font-size: clamp(18px, 2.6vw, 26px); font-weight: 900; line-height: 1.35; margin: 0 0 6px;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: keep-all; overflow-wrap: anywhere;
+      text-shadow: 0 2px 10px rgba(0,0,0,.6);
+    }
+    .p-author { font-size: 14px; opacity: .85; font-weight: 400; margin-bottom: 14px; }
+    .p-lbl { font-size: 14px; opacity: .85; font-weight: 400; }
+    .p-date { font-size: clamp(30px, 5vw, 48px); font-weight: 900; color: #ffd75e; letter-spacing: 1px; font-variant-numeric: tabular-nums; margin: 2px 0; text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+    .p-yt { display: inline-block; margin-top: 8px; font-size: 12px; color: #fff; opacity: .8; border: 1px solid rgba(255,255,255,.5); border-radius: 99px; padding: 3px 12px; text-decoration: none; font-weight: 700; }
+    .p-btns { display: flex; flex-direction: column; gap: 10px; align-items: center; margin: 10px 0; }
+    .choice {
+      width: 210px; max-width: 80%; padding: 13px 10px; border-radius: 99px; font-size: 17px;
+      border: 2px solid #fff; background: rgba(0,0,0,.25); color: #fff; backdrop-filter: blur(2px);
+      transition: background .15s, transform .1s;
+    }
+    .choice:hover { background: rgba(255,255,255,.18); }
+    .choice:active { transform: scale(.97); }
+    .choice kbd { font-family: inherit; font-size: 11px; opacity: .7; margin-left: 6px; }
+
+    .vs {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: 68px; height: 68px; border-radius: 50%; background: #fff; color: #121213;
+      display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900;
+      z-index: 3; box-shadow: 0 4px 20px rgba(0,0,0,.4); transition: background .25s, color .25s, transform .25s;
+    }
+    .vs.ok { background: var(--green); color: #fff; transform: translate(-50%, -50%) scale(1.12); }
+    .vs.no { background: var(--red); color: #fff; transform: translate(-50%, -50%) scale(1.12); }
+    .mode-tag { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 3; font-size: 12px; background: rgba(0,0,0,.55); color: #fff; padding: 4px 12px; border-radius: 99px; white-space: nowrap; }
+
+    /* 모바일: 위아래 배치 */
+    @media (max-width: 700px), (max-aspect-ratio: 4/5) {
+      .track { flex-direction: column; width: 100%; height: 150%; }
+      .track.shift { transform: translateY(-33.3333%); }
+      .panel { flex: 0 0 33.3333%; width: 100%; }
+      .pc { padding: 14px 18px; }
+      .p-author { margin-bottom: 8px; }
+      .p-btns { flex-direction: row; justify-content: center; }
+      .choice { width: auto; flex: 1; max-width: 170px; padding: 12px 8px; font-size: 16px; }
+      .choice kbd { display: none; }
+      .vs { width: 54px; height: 54px; font-size: 16px; }
+      .p-date { font-size: 34px; }
+    }
+
+    /* ---------- 결과 / 팝업 ---------- */
+    .modal { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .box {
+      position: relative; width: 100%; max-width: 400px; max-height: calc(100dvh - 32px); overflow-y: auto;
+      background: var(--surface); color: var(--fg); border-radius: 18px; padding: 24px 20px 20px; text-align: center;
+      animation: pop .25s ease;
+    }
+    @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+    .box h2 { margin: 0 0 10px; font-size: 22px; font-weight: 900; }
+    .x { position: absolute; top: 8px; right: 10px; width: 36px; height: 36px; border: none; background: none; font-size: 24px; color: var(--muted); }
+    .big { font-size: 64px; font-weight: 900; line-height: 1; margin: 8px 0 2px; }
+    .sub { color: var(--muted); font-weight: 400; font-size: 14px; }
+    .newrec { display: inline-block; background: var(--yellow); color: #fff; border-radius: 99px; padding: 3px 12px; font-size: 13px; margin-top: 8px; }
+    .marks { font-size: 18px; letter-spacing: 1px; margin: 12px 0 4px; word-break: break-all; line-height: 1.4; }
+    .last-pair { text-align: left; background: var(--bg); border-radius: 12px; padding: 10px 12px; margin-top: 14px; font-size: 13px; line-height: 1.6; }
+    .last-pair .row { display: flex; justify-content: space-between; gap: 10px; }
+    .last-pair .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 400; }
+    .last-pair .d { white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .actions { display: flex; gap: 8px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+    .pill { border: none; border-radius: 99px; padding: 11px 20px; font-size: 15px; background: var(--green); color: #fff; }
+    .pill.ghost { background: var(--bg); color: var(--fg); }
+    .countdown { font-size: 13px; color: var(--muted); margin-top: 12px; font-weight: 400; }
+    .help { text-align: left; font-weight: 400; line-height: 1.75; font-size: 15px; }
+    .help b { font-weight: 900; }
+    .setting { display: flex; justify-content: space-between; align-items: center; padding: 12px 2px; border-bottom: 1px solid var(--border); text-align: left; }
+    .setting input { width: 22px; height: 22px; accent-color: var(--green); }
+
+    .toasts { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; }
+    .toast { background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: 15px; transition: opacity .3s; white-space: nowrap; }
+
+    @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+    .bump { display: inline-block; animation: bump .35s ease; }
+    @media (prefers-reduced-motion: reduce) { .track.shift { transition: none; } .box, .bump { animation: none; } }
+  </style>
 </head>
 <body>
-
-    <h1 id="game-title">소리MAD 타임라인 <span id="help-icon">?</span></h1>
-    <div id="today-date" class="date-display"></div>
-    <div id="game-no" class="game-no" onclick="openArchive()">#소리MAD타임라인_ (날짜변경)</div>
-    <p id="game-status">오래된 순(위) → 최신 순(아래)</p>
-
-    <div id="quiz-container"><p>데이터 로딩 중...</p></div>
-
-    <button id="check-btn">정답 확인</button>
-    <button id="share-btn" onclick="shareResult()">결과 공유 (복사)</button>
-
-    <div id="stats-container">
-        <div class="stat-grid">
-            <div class="stat-box"><span class="stat-val" id="stat-played">0</span><span class="stat-lbl">판수</span></div>
-            <div class="stat-box"><span class="stat-val" id="stat-winrate">0</span><span class="stat-lbl">승률%</span></div>
-            <div class="stat-box"><span class="stat-val" id="stat-streak">0</span><span class="stat-lbl">스트릭</span></div>
-            <div class="stat-box"><span class="stat-val" id="stat-max">0</span><span class="stat-lbl">최대</span></div>
-        </div>
-        <div id="result-msg" style="font-weight: bold; white-space: pre-wrap;"></div>
+  <header class="hud">
+    <button class="brand" id="homeBtn" aria-label="처음 화면으로">소리MAD 타임라인</button>
+    <div class="score hidden" id="scoreBox">점수 <b id="score">0</b> · 최고 <b id="best">0</b></div>
+    <div class="hud-btns">
+      <button class="icon-btn" id="helpBtn" aria-label="게임 방법">❓</button>
+      <button class="icon-btn" id="setBtn" aria-label="설정">⚙️</button>
     </div>
+  </header>
 
-    <div id="helpModal" class="modal">
-        <div class="modal-content">
-            <h2>게임 방법</h2>
-            <ul style="text-align: left; font-size: 14px; line-height: 1.8;">
-                <li>소리MAD 영상 5개를 <b>날짜 순</b>으로 나열하세요.</li>
-                <li>위: 오래된 영상, 아래: 최신 영상</li>
-                <li>기회는 <b>하루 한 번</b>입니다!</li>
-            </ul>
-            <div class="close-btn" onclick="closeModal()">알겠어요!</div>
-        </div>
+  <!-- 시작 화면 -->
+  <main id="home" class="home">
+    <h1><span class="a">더 예전?</span><br><span class="b">더 최근?</span></h1>
+    <p class="tagline">두 소리MAD 중 어느 쪽이 먼저 올라왔을까?</p>
+    <div id="homeBody"><p class="load-msg">영상 목록을 불러오는 중…</p></div>
+  </main>
+
+  <!-- 게임 화면 -->
+  <section id="stage" class="stage hidden" aria-live="polite">
+    <div id="track" class="track"></div>
+    <div id="vs" class="vs">VS</div>
+    <div id="modeTag" class="mode-tag"></div>
+  </section>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <!-- 게임 오버 -->
+  <div id="overModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="overTitle">
+    <div class="box">
+      <h2 id="overTitle">게임 오버</h2>
+      <div id="overBody"></div>
     </div>
+  </div>
 
-    <div id="archiveModal" class="modal">
-        <div class="modal-content">
-            <h2>지난 문제 풀기</h2>
-            <p>오늘 이전의 날짜만 선택 가능합니다.</p>
-            <input type="date" id="archive-date">
-            <br>
-            <div class="close-btn" onclick="jumpToDate()">이동하기</div>
-            <div class="close-btn" style="background:#444" onclick="closeModal()">취소</div>
-        </div>
+  <!-- 게임 방법 -->
+  <div id="helpModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="box">
+      <button class="x" aria-label="닫기">×</button>
+      <h2 id="helpTitle">게임 방법</h2>
+      <div class="help">
+        <p style="margin-top:0">왼쪽(모바일은 위) 영상의 <b>업로드 날짜</b>가 공개돼요.<br>
+        오른쪽(아래) 영상이 그보다 <b>더 예전</b>에 올라왔는지, <b>더 최근</b>에 올라왔는지 맞혀 보세요.</p>
+        <p>맞히면 오른쪽 영상이 왼쪽으로 넘어오고 새 영상이 나와요. <b>한 번이라도 틀리면 끝!</b> 연속으로 맞힌 개수가 점수예요. 점수가 올라갈수록 날짜가 비슷한 영상이 나와서 점점 어려워져요.</p>
+        <p>📅 <b>오늘의 도전</b>: 모두에게 같은 순서로 나오고, 하루에 한 번만 도전할 수 있어요. 결과를 공유해 친구와 겨뤄 보세요.<br>
+        ♾️ <b>무한 모드</b>: 몇 번이든 다시 도전해 최고 기록을 세워 보세요.</p>
+        <p class="sub" style="margin-bottom:0">PC에서는 ← (더 예전) / → (더 최근) 키로도 고를 수 있어요.</p>
+      </div>
     </div>
+  </div>
 
-    <script>
-        const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_h3u-l5vbxuwZXttKmeieqqxIwFBuL8nNu7VBfeWGLy9eP8EN9dNGGO3kVMmdmIvPvmqaYzneJU8E/pub?gid=0&single=true&output=csv";
-        let allData = [], isGameFinished = false, daysElapsedGlobal = 0, targetDate = new Date();
-        const container = document.getElementById('quiz-container');
+  <!-- 설정 -->
+  <div id="setModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="box">
+      <button class="x" aria-label="닫기">×</button>
+      <h2 id="setTitle">설정</h2>
+      <label class="setting"><span>다크 모드</span><input type="checkbox" id="darkToggle"></label>
+      <label class="setting"><span>효과음</span><input type="checkbox" id="soundToggle"></label>
+    </div>
+  </div>
 
-        const sortableInstance = new Sortable(container, { 
-            animation: 200, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag',
-            onStart: () => document.body.style.overflow = 'hidden',
-            onEnd: () => document.body.style.overflow = ''
-        });
+<script>
+/* =====================================================================
+   ★ 운영 설정 ★
+   시트 열 순서: A(아무거나) · B 제목 · C 제작자 · D 업로드 날짜 · E 유튜브 영상 ID
+   날짜는 2015-03-07, 2015-3-7, 2015.03.07 모두 인식합니다.
+   ===================================================================== */
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_h3u-l5vbxuwZXttKmeieqqxIwFBuL8nNu7VBfeWGLy9eP8EN9dNGGO3kVMmdmIvPvmqaYzneJU8E/pub?gid=0&single=true&output=csv";
+const START = Date.UTC(2026, 1, 4, 15, 0, 0);   // 1회차 = 2026-02-05 (한국 시간 자정)
+const SORIWORDLE_URL = "https://sori-wordle.com";
 
-        // 날짜를 숫자(YYYYMMDD)로 변환하여 안전하게 비교
-        function getDateValue(d) {
-            const date = new Date(d);
-            return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
-        }
+/* ===================================================================== */
+const $ = (id) => document.getElementById(id);
+const DAY = 86400000;
+const dayIndex = () => Math.floor((Date.now() - START) / DAY);       // 0 = 2026-02-05
+const msToNext = () => START + (dayIndex() + 1) * DAY - Date.now();
+const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const isTouch = window.matchMedia && matchMedia("(pointer: coarse)").matches;
+const fmtDate = (t) => new Date(t).toISOString().slice(0, 10).replace(/-/g, ".");
+function toast(msg, ms = 1800) {
+  const el = document.createElement("div"); el.className = "toast"; el.textContent = msg;
+  $("toasts").appendChild(el);
+  setTimeout(() => { el.style.opacity = "0"; setTimeout(() => el.remove(), 300); }, ms);
+}
 
-        function getDaysSinceStart(d) {
-            const start = new Date("2026-02-05");
-            start.setHours(0,0,0,0);
-            const current = new Date(d);
-            current.setHours(0,0,0,0);
-            return Math.floor((current - start) / (1000 * 60 * 60 * 24)) + 1;
-        }
+/* ---------- 테마 / 효과음 ---------- */
+function applyTheme() {
+  let t = load("tl-theme", null);
+  if (t !== "light" && t !== "dark") t = (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  document.body.classList.toggle("dark", t === "dark");
+  $("darkToggle").checked = t === "dark";
+}
+$("darkToggle").onchange = (e) => { save("tl-theme", e.target.checked ? "dark" : "light"); applyTheme(); };
+applyTheme();
 
-        // 시트 데이터를 먼저 가져온 뒤 게임 실행
-        fetch(sheetUrl).then(r => r.text()).then(csv => {
-            const lines = csv.replace(/^\uFEFF/, "").split(/\r?\n/);
-            allData = lines.map(line => {
-                const c = line.split(",");
-                return { title: c[1], author: c[2], date: c[3], youtubeId: c[4] };
-            }).filter(item => item.date && item.date.includes('-'));
-            
-            // 데이터 로드가 완료되면 오늘 날짜로 게임 시작
-            loadGame(new Date());
-        });
+let actx = null;
+const soundOn = () => load("tl-sound", false);
+$("soundToggle").checked = soundOn();
+$("soundToggle").onchange = (e) => { save("tl-sound", e.target.checked); if (e.target.checked) sfx("ok"); };
+function tone(f, dur, type, vol, when = 0) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+  } catch (e) {}
+}
+function sfx(n) {
+  if (!soundOn()) return;
+  if (n === "ok") { tone(784, 0.12, "triangle", 0.08); tone(1175, 0.16, "triangle", 0.08, 0.09); }
+  if (n === "no") { tone(180, 0.2, "sawtooth", 0.06); tone(120, 0.3, "sawtooth", 0.06, 0.15); }
+  if (n === "tick") tone(1400, 0.02, "square", 0.02);
+  if (n === "rec") [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.18, "square", 0.045, i * 0.1));
+}
 
-        function loadGame(date) {
-            if (allData.length === 0) return; // 데이터가 아직 없으면 중단
+/* ---------- 데이터 ---------- */
+function parseCSV(text) {
+  const rows = []; let row = [], f = "", q = false;
+  text = text.replace(/^﻿/, "");
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ",") { row.push(f); f = ""; }
+    else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+    else f += ch;
+  }
+  if (f !== "" || row.length) { row.push(f); rows.push(row); }
+  return rows;
+}
+function parseDate(s) {
+  const m = String(s || "").match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+  if (!m) return null;
+  const t = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+  return isNaN(t) ? null : t;
+}
+let items = [];
+async function loadItems() {
+  const r = await fetch(SHEET_URL + "&t=" + Date.now(), { cache: "no-store" });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const seen = new Set(), list = [];
+  for (const c of parseCSV(await r.text())) {
+    const title = (c[1] || "").trim(), author = (c[2] || "").trim(), t = parseDate(c[3]), id = (c[4] || "").trim();
+    if (!title || t === null || !/^[\w-]{6,}$/.test(id) || seen.has(id)) continue;
+    seen.add(id); list.push({ title, author, t, id });
+  }
+  if (list.length < 3) throw new Error("영상이 너무 적어요");
+  return list;
+}
 
-            const todayVal = getDateValue(new Date());
-            const targetVal = getDateValue(date);
+/* ---------- 난수 (오늘의 도전은 모두 같은 순서) ---------- */
+function mulberry32(a) {
+  return function () { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
 
-            // 미래 날짜 방지 (숫자 비교로 더 정확하게)
-            if (targetVal > todayVal) {
-                alert("미래의 문제는 미리 풀 수 없습니다!");
-                loadGame(new Date());
-                return;
-            }
+/* ---------- 게임 상태 ---------- */
+let mode = null, rng = Math.random, used = new Set(), cur = null, next = null, score = 0, marks = [], busy = false, lastPair = null;
 
-            targetDate = new Date(date);
-            daysElapsedGlobal = getDaysSinceStart(targetDate);
-            document.getElementById('today-date').innerText = targetDate.toLocaleDateString();
-            document.getElementById('game-no').innerText = `#소리MAD타임라인_${daysElapsedGlobal} (날짜변경)`;
-            
-            const history = JSON.parse(localStorage.getItem('soriHistory') || '{}');
-            const alreadySolved = history[daysElapsedGlobal];
-            const dailySelection = getDailySelection(daysElapsedGlobal);
-            
-            if (alreadySolved) {
-                renderSolvedGame(dailySelection, alreadySolved);
-            } else {
-                renderNewGame(dailySelection);
-            }
-        }
+// 점수가 오를수록 날짜 차이가 작은 영상을 골라 점점 어렵게
+function pickNext(from) {
+  const targetGap = Math.max(14, 900 * Math.pow(0.86, score)) * (0.6 + 0.8 * rng()); // 일 단위
+  let pool = items.filter((it) => !used.has(it.id) && it.t !== from.t);
+  if (!pool.length) { used = new Set([from.id]); pool = items.filter((it) => it.id !== from.id && it.t !== from.t); }
+  let best = null, bestDiff = Infinity;
+  for (let k = 0; k < Math.min(40, pool.length); k++) {
+    const cand = pool[Math.floor(rng() * pool.length)];
+    const diff = Math.abs(Math.abs(cand.t - from.t) / DAY - targetGap);
+    if (diff < bestDiff) { best = cand; bestDiff = diff; }
+  }
+  used.add(best.id);
+  return best;
+}
 
-        function getDailySelection(dayNo) {
-            const selection = [];
-            let usedDates = new Set(), currentIndex = (dayNo * 7) % allData.length, attempts = 0;
-            while (selection.length < 5 && attempts < allData.length) {
-                const item = allData[currentIndex % allData.length];
-                if (!usedDates.has(item.date)) { selection.push(item); usedDates.add(item.date); }
-                currentIndex++; attempts++;
-            }
-            return selection.sort((a, b) => ((dayNo + a.title.length) % 10) - 5);
-        }
+function panelHTML(it, known) {
+  const img = `<img class="bgimg" src="https://i.ytimg.com/vi/${esc(it.id)}/hqdefault.jpg" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg'}))">`;
+  const head = `<div class="p-title">${esc(it.title)}</div><div class="p-author">${it.author ? "제작 " + esc(it.author) : "&nbsp;"}</div>`;
+  const body = known
+    ? `<div class="p-lbl">업로드</div><div class="p-date">${fmtDate(it.t)}</div>
+       <a class="p-yt" href="https://youtu.be/${esc(it.id)}" target="_blank" rel="noopener">영상 보기 ↗</a>`
+    : `<div class="p-lbl">이 영상은 그보다</div>
+       <div class="p-btns">
+         <button class="choice" data-c="older">⏪ 더 예전<kbd>←</kbd></button>
+         <button class="choice" data-c="newer">더 최근 ⏩<kbd>→</kbd></button>
+       </div>
+       <div class="p-lbl">에 올라왔어요</div>
+       <div class="p-date hidden"></div>
+       <a class="p-yt hidden" href="https://youtu.be/${esc(it.id)}" target="_blank" rel="noopener">영상 보기 ↗</a>`;
+  return `<section class="panel">${img}<div class="shade"></div><div class="pc">${head}${body}</div></section>`;
+}
+function renderTrack(third) {
+  const track = $("track");
+  track.classList.remove("shift");
+  track.innerHTML = panelHTML(cur, true) + panelHTML(next, false) + (third ? panelHTML(third, false) : `<section class="panel"><div class="noimg"></div></section>`);
+  track.querySelectorAll(".choice").forEach((b) => b.onclick = () => choose(b.dataset.c));
+  $("vs").className = "vs"; $("vs").textContent = "VS";
+}
+function setScore(n, bump) {
+  score = n; $("score").textContent = n;
+  if (bump && !reduceMotion) { $("score").classList.remove("bump"); void $("score").offsetWidth; $("score").classList.add("bump"); }
+  const st = stats();
+  $("best").textContent = Math.max(mode === "daily" ? st.dailyBest : st.best, score);
+}
 
-        function renderNewGame(list) {
-            isGameFinished = false;
-            sortableInstance.option("disabled", false);
-            document.getElementById('check-btn').style.display = 'block';
-            document.getElementById('share-btn').style.display = 'none';
-            document.getElementById('stats-container').style.display = 'none';
-            document.getElementById('game-status').innerText = "오래된 순(위) → 최신 순(아래)";
-            container.innerHTML = "";
-            list.forEach(item => container.appendChild(createCard(item)));
-        }
+/* ---------- 기록 ---------- */
+const stats = () => Object.assign({ best: 0, played: 0, dailyPlayed: 0, dailyBest: 0, dailyStreak: 0, lastDaily: null }, load("tl-stats", {}));
+const getDaily = (d = dayIndex()) => (load("tl-daily", {}))[d] || null;
+function setDaily(rec, d = dayIndex()) { const all = load("tl-daily", {}); all[d] = rec; save("tl-daily", all); }
 
-        function renderSolvedGame(list, solvedData) {
-            isGameFinished = true;
-            sortableInstance.option("disabled", true);
-            document.getElementById('check-btn').style.display = 'none';
-            document.getElementById('game-status').innerText = "이미 완료한 정답입니다.";
-            const sortedList = [...list].sort((a,b) => solvedData.order.indexOf(a.date) - solvedData.order.indexOf(b.date));
-            container.innerHTML = "";
-            const correctDates = [...solvedData.order].sort();
-            sortedList.forEach((item, i) => {
-                const card = createCard(item);
-                const isCorrect = item.date === correctDates[i];
-                card.querySelector('.card-back').classList.add(isCorrect ? 'correct-back' : 'wrong-back');
-                card.classList.add('flipped', 'no-drag');
-                container.appendChild(card);
-            });
-            showStatsUI(solvedData.score);
-        }
+function finishDaily(d, sc, mk) {
+  setDaily({ score: sc, marks: mk, done: true }, d);
+  const s = stats();
+  s.dailyPlayed++; s.dailyBest = Math.max(s.dailyBest, sc);
+  s.dailyStreak = (s.lastDaily === d - 1) ? s.dailyStreak + 1 : 1;
+  s.lastDaily = d;
+  save("tl-stats", s);
+}
+// 오늘의 도전 도중에 새로고침/이탈했다면 그 시점 점수로 확정 (재도전 방지)
+function settleInterruptedDaily() {
+  const all = load("tl-daily", {});
+  for (const [d, rec] of Object.entries(all)) if (rec && !rec.done) finishDaily(+d, rec.score, rec.marks || "");
+}
 
-        function createCard(item) {
-            const card = document.createElement('div');
-            card.className = 'video-card'; card.dataset.date = item.date;
-            card.onclick = function() { if (isGameFinished) this.classList.toggle('flipped'); };
-            card.innerHTML = `<div class="card-face card-front"><div class="thumbnail"><img src="https://img.youtube.com/vi/${item.youtubeId}/mqdefault.jpg"></div><div class="info"><div class="video-title">${item.title}</div><div class="author">${item.author}</div></div></div><div class="card-face card-back"><div class="back-date">${item.date}</div><a href="https://youtu.be/${item.youtubeId}" target="_blank" class="yt-link" onclick="event.stopPropagation()">영상 보기</a></div>`;
-            return card;
-        }
+/* ---------- 진행 ---------- */
+function startGame(m) {
+  mode = m;
+  const d = dayIndex();
+  if (m === "daily") {
+    if (getDaily(d)) { showHome(); return; }
+    rng = mulberry32(d * 7919 + 17);
+    setDaily({ score: 0, marks: "", done: false }, d);
+  } else {
+    rng = Math.random;
+  }
+  used = new Set(); marks = []; busy = false; lastPair = null;
+  cur = items[Math.floor(rng() * items.length)]; used.add(cur.id);
+  setScore(0);
+  next = pickNext(cur);
+  $("home").classList.add("hidden");
+  $("stage").classList.remove("hidden");
+  $("scoreBox").classList.remove("hidden");
+  $("modeTag").textContent = m === "daily" ? `📅 오늘의 도전 #${d + 1}` : "♾️ 무한 모드";
+  renderTrack(null);
+}
 
-        document.getElementById('check-btn').onclick = function() {
-            if (isGameFinished) return;
-            sortableInstance.option("disabled", true);
-            isGameFinished = true;
-            const cards = Array.from(container.children);
-            const userDates = cards.map(c => c.dataset.date);
-            const sortedDates = [...userDates].sort();
-            let score = 0;
-            cards.forEach((card, i) => {
-                setTimeout(() => {
-                    const isCorrect = userDates[i] === sortedDates[i];
-                    if (isCorrect) { card.querySelector('.card-back').classList.add('correct-back'); score++; }
-                    else { card.querySelector('.card-back').classList.add('wrong-back'); }
-                    card.classList.add('flipped', 'no-drag');
-                    if (i === cards.length - 1) { saveResult(score, userDates); showStatsUI(score); }
-                }, i * 200);
-            });
-            this.style.display = 'none';
-        };
+function countUp(el, fromT, toT, ms) {
+  return new Promise((res) => {
+    el.classList.remove("hidden");
+    if (reduceMotion) { el.textContent = fmtDate(toT); return res(); }
+    const t0 = performance.now(); let lastTick = 0;
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmtDate(fromT + (toT - fromT) * e);
+      if (now - lastTick > 70) { sfx("tick"); lastTick = now; }
+      if (p < 1) requestAnimationFrame(step); else res();
+    };
+    requestAnimationFrame(step);
+  });
+}
 
-        function saveResult(score, order) {
-            const history = JSON.parse(localStorage.getItem('soriHistory') || '{}');
-            if(history[daysElapsedGlobal]) return; // 중복 저장 방지
-            history[daysElapsedGlobal] = { score, order, date: new Date().toLocaleDateString() };
-            localStorage.setItem('soriHistory', JSON.stringify(history));
-            let s = JSON.parse(localStorage.getItem('soriStats') || '{"played":0,"wins":0,"streak":0,"maxStreak":0}');
-            s.played++;
-            if (score === 5) { s.wins++; s.streak++; } else { s.streak = 0; }
-            if (s.streak > s.maxStreak) s.maxStreak = s.streak;
-            localStorage.setItem('soriStats', JSON.stringify(s));
-        }
+async function choose(c) {
+  if (busy || !next) return;
+  busy = true;
+  const panel = $("track").children[1];
+  panel.querySelector(".p-btns").classList.add("hidden");
+  panel.querySelectorAll(".p-lbl").forEach((l, i) => l.textContent = i === 0 ? "업로드" : "");
+  await countUp(panel.querySelector(".p-date"), cur.t, next.t, 900);
+  panel.querySelector(".p-yt").classList.remove("hidden");
 
-        function showStatsUI(score) {
-            const s = JSON.parse(localStorage.getItem('soriStats') || '{}');
-            document.getElementById('stat-played').innerText = s.played || 0;
-            document.getElementById('stat-winrate').innerText = s.played ? Math.round((s.wins/s.played)*100) : 0;
-            document.getElementById('stat-streak').innerText = s.streak || 0;
-            document.getElementById('stat-max').innerText = s.maxStreak || 0;
-            document.getElementById('share-btn').style.display = 'block';
-            document.getElementById('stats-container').style.display = 'block';
-            let rank = score === 5 ? "완벽합니다! 🔥" : score >= 3 ? "훌륭해요! 👍" : "아쉬워요! 💦";
-            document.getElementById('result-msg').innerText = `${rank}\n(${score}/5 정답)`;
-        }
+  const ok = c === "older" ? next.t < cur.t : next.t > cur.t;
+  lastPair = { a: cur, b: next, c };
+  marks.push(ok ? "🟩" : "🟥");
+  $("vs").textContent = ok ? "✓" : "✗";
+  $("vs").className = "vs " + (ok ? "ok" : "no");
 
-        function shareResult() {
-            const history = JSON.parse(localStorage.getItem('soriHistory') || '{}');
-            const data = history[daysElapsedGlobal];
-            const sorted = [...data.order].sort();
-            let emojis = data.order.map((d, i) => d === sorted[i] ? "🟩" : "🟥").join("");
-            const text = `소리MAD 타임라인 #${daysElapsedGlobal}\n${emojis}\n정답: ${data.score}/5\n${window.location.href}`;
-            navigator.clipboard.writeText(text).then(() => alert("결과가 복사되었습니다!"));
-        }
+  if (!ok) {
+    sfx("no");
+    setTimeout(gameOver, 900);
+    return;
+  }
+  sfx("ok");
+  setScore(score + 1, true);
+  if (mode === "daily") setDaily({ score, marks: marks.join(""), done: false });
 
-        function openArchive() {
-            const modal = document.getElementById('archiveModal');
-            const dateInput = document.getElementById('archive-date');
-            dateInput.max = new Date().toISOString().split('T')[0];
-            modal.style.display = 'block';
-        }
-        function closeModal() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
-        function jumpToDate() {
-            const val = document.getElementById('archive-date').value;
-            if (val) { loadGame(new Date(val)); closeModal(); }
-        }
-        document.getElementById('help-icon').onclick = () => document.getElementById('helpModal').style.display = 'block';
-    </script>
+  // 다음 영상 준비 후 한 칸 밀기
+  const upcoming = pickNext(next);
+  const track = $("track");
+  track.children[2].outerHTML = panelHTML(upcoming, false);
+  await new Promise((r) => setTimeout(r, 650));
+  let done = false;
+  const finish = () => {
+    if (done) return; done = true;
+    cur = next; next = upcoming;
+    renderTrack(null);
+    busy = false;
+  };
+  if (reduceMotion) return finish();
+  track.classList.add("shift");
+  track.addEventListener("transitionend", finish, { once: true });
+  setTimeout(finish, 900); // 애니메이션 종료 이벤트가 누락돼도 멈추지 않게
+}
+
+function gameOver() {
+  const d = dayIndex(), s = stats();
+  let newRecord = false;
+  if (mode === "daily") {
+    finishDaily(d, score, marks.join(""));
+  } else {
+    s.played++;
+    if (score > s.best) { s.best = score; newRecord = score > 0; }
+    save("tl-stats", s);
+  }
+  if (newRecord) sfx("rec");
+  const st = stats();
+  const pairRow = (it) => `<div class="row"><span class="t">${esc(it.title)}</span><span class="d">${fmtDate(it.t)}</span></div>`;
+  $("overTitle").textContent = mode === "daily" ? `오늘의 도전 #${d + 1}` : "게임 오버";
+  $("overBody").innerHTML = `
+    <div class="sub">연속 정답</div>
+    <div class="big">${score}</div>
+    ${newRecord ? `<div class="newrec">🎉 최고 기록 갱신!</div>` : ""}
+    <div class="sub">${mode === "daily" ? `오늘의 도전 최고 ${st.dailyBest} · 연속 참여 ${st.dailyStreak}일` : `무한 모드 최고 ${st.best}`}</div>
+    ${lastPair ? `<div class="last-pair"><div class="sub" style="margin-bottom:4px">마지막 문제</div>${pairRow(lastPair.a)}${pairRow(lastPair.b)}</div>` : ""}
+    <div class="actions">
+      <button class="pill" id="shareBtn">결과 공유</button>
+      ${mode === "endless" ? `<button class="pill ghost" id="retryBtn">다시 하기</button>` : `<button class="pill ghost" id="endlessBtn">무한 모드</button>`}
+      <button class="pill ghost" id="toHomeBtn">처음으로</button>
+    </div>
+    ${mode === "daily" ? `<div class="countdown">다음 도전까지 <span data-cd></span></div>` : ""}`;
+  $("shareBtn").onclick = () => share(mode, score, marks.join(""), d);
+  if ($("retryBtn")) $("retryBtn").onclick = () => { closeModals(); startGame("endless"); };
+  if ($("endlessBtn")) $("endlessBtn").onclick = () => { closeModals(); startGame("endless"); };
+  $("toHomeBtn").onclick = () => { closeModals(); showHome(); };
+  tickCountdown();
+  openModal("overModal");
+  busy = true;
+}
+
+/* ---------- 공유 ---------- */
+function shareText(m, sc, mk, d) {
+  const url = location.origin + location.pathname;
+  const chain = mk.length > 30 ? mk.slice(0, 2 * 12) + `…(+${sc - 12})` + mk.slice(-2) : mk; // 이모지는 2글자 단위
+  return m === "daily"
+    ? `소리MAD 타임라인 📅 오늘의 도전 #${d + 1}\n🔥 ${sc}연속 정답!\n${chain}\n${url}`
+    : `소리MAD 타임라인 ♾️ 무한 모드\n🔥 ${sc}연속 정답! (최고 ${stats().best})\n${url}`;
+}
+async function share(m, sc, mk, d) {
+  const text = shareText(m, sc, mk, d);
+  if (isTouch && navigator.share) {
+    try { await navigator.share({ text }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  try { await navigator.clipboard.writeText(text); toast("결과가 복사되었어요!"); }
+  catch (e) {
+    const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.top = "-1000px";
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch (_) {}
+    ta.remove(); toast(ok ? "결과가 복사되었어요!" : "복사에 실패했어요");
+  }
+}
+
+/* ---------- 시작 화면 ---------- */
+function fmtCD(ms) { const s = Math.max(0, Math.floor(ms / 1000)), p = (x) => String(x).padStart(2, "0"); return `${p(Math.floor(s / 3600))}:${p(Math.floor(s / 60) % 60)}:${p(s % 60)}`; }
+function tickCountdown() { document.querySelectorAll("[data-cd]").forEach((el) => el.textContent = fmtCD(msToNext())); }
+setInterval(tickCountdown, 1000);
+
+function showHome() {
+  mode = null; busy = false;
+  $("stage").classList.add("hidden");
+  $("scoreBox").classList.add("hidden");
+  $("home").classList.remove("hidden");
+  if (!items.length) return;
+  const d = dayIndex(), today = getDaily(d), s = stats();
+  $("homeBody").innerHTML = `
+    <button class="mode-btn" id="dailyBtn" ${today ? "disabled" : ""}>
+      <span>📅 오늘의 도전 #${d + 1}<small>${today ? `오늘 기록 ${today.score}연속 · 다음 도전까지 <span data-cd></span>` : "모두 같은 순서 · 하루 한 번"}</small></span>
+      <span class="go">${today ? "✓" : "→"}</span>
+    </button>
+    ${today ? `<button class="link-btn" id="shareTodayBtn">오늘 결과 공유하기</button>` : ""}
+    <button class="mode-btn alt" id="endlessBtnHome">
+      <span>♾️ 무한 모드<small>무제한 도전 · 최고 기록 ${s.best}</small></span><span class="go">→</span>
+    </button>
+    <div class="home-stats">
+      <div><b>${s.best}</b><span>무한 최고</span></div>
+      <div><b>${s.dailyBest}</b><span>도전 최고</span></div>
+      <div><b>${s.lastDaily !== null && s.lastDaily >= d - 1 ? s.dailyStreak : 0}</b><span>연속 참여</span></div>
+    </div>
+    <div class="home-links">
+      <button class="link-btn" id="helpLink">게임 방법</button>
+      <a href="${SORIWORDLE_URL}">🟩 소리워들 하러 가기</a>
+    </div>`;
+  $("dailyBtn").onclick = () => startGame("daily");
+  $("endlessBtnHome").onclick = () => startGame("endless");
+  $("helpLink").onclick = () => openModal("helpModal");
+  if ($("shareTodayBtn")) $("shareTodayBtn").onclick = () => share("daily", today.score, today.marks || "", d);
+  tickCountdown();
+}
+
+/* ---------- 팝업 ---------- */
+const MODALS = ["overModal", "helpModal", "setModal"];
+const anyModal = () => MODALS.some((id) => !$(id).classList.contains("hidden"));
+function openModal(id) { MODALS.forEach((m) => $(m).classList.add("hidden")); $(id).classList.remove("hidden"); }
+function closeModals() { MODALS.forEach((m) => $(m).classList.add("hidden")); }
+["helpModal", "setModal"].forEach((id) => {
+  $(id).addEventListener("click", (e) => { if (e.target === $(id)) closeModals(); });
+  $(id).querySelector(".x").onclick = closeModals;
+});
+$("helpBtn").onclick = () => openModal("helpModal");
+$("setBtn").onclick = () => openModal("setModal");
+$("homeBtn").onclick = () => {
+  if (mode && !busy && (score > 0 || mode === "daily") && !confirm("진행 중인 게임을 그만둘까요?" + (mode === "daily" ? " (오늘의 도전은 현재 점수로 기록돼요)" : ""))) return;
+  if (mode === "daily" && getDaily() && !getDaily().done) finishDaily(dayIndex(), score, marks.join(""));
+  if (mode === "endless" && !busy && score > 0) { const s = stats(); s.played++; s.best = Math.max(s.best, score); save("tl-stats", s); }
+  closeModals(); showHome();
+};
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { if (!$("overModal").classList.contains("hidden")) return; closeModals(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!$("overModal").classList.contains("hidden") && e.key === "Enter" && mode === "endless") { e.preventDefault(); closeModals(); startGame("endless"); return; }
+  if (anyModal() || !mode || busy) return;
+  if (e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "1") { e.preventDefault(); choose("older"); }
+  if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "2") { e.preventDefault(); choose("newer"); }
+});
+
+/* ---------- 시작 ---------- */
+async function boot() {
+  $("homeBody").innerHTML = `<p class="load-msg">영상 목록을 불러오는 중…</p>`;
+  try {
+    items = await loadItems();
+  } catch (e) {
+    $("homeBody").innerHTML = `<p class="load-msg">영상 목록을 불러오지 못했어요.<br>인터넷 연결을 확인해 주세요.</p><button class="pill" id="retryLoad">다시 시도</button>`;
+    $("retryLoad").onclick = boot;
+    return;
+  }
+  settleInterruptedDaily();
+  showHome();
+  if (!load("tl-help-seen", false)) { save("tl-help-seen", true); setTimeout(() => openModal("helpModal"), 300); }
+}
+boot();
+</script>
 </body>
 </html>
